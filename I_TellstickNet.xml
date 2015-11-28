@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<implementation>
+  <files>L_TellstickNet.lua</files>
+  <startup>lug_startup</startup>
+  <actionList>
+    <action>
+      <serviceId>urn:upnp-org:serviceId:SwitchPower1</serviceId>
+      <name>SetTarget</name>
+      <run>
+		luup.log("SetTarget for telldus device: " .. lul_settings.newTargetValue)
+		if(lul_settings.newTargetValue == "1") then
+			deviceCommand(luup.devices[lul_device].id, "turnOn")
+		else
+			deviceCommand(luup.devices[lul_device].id, "turnOff")
+		end
+		
+		luup.variable_set("urn:upnp-org:serviceId:SwitchPower1", "Status", lul_settings.newTargetValue, lul_device)
+		
+		return true
+      </run>
+    </action>
+  </actionList>  
+</implementation>

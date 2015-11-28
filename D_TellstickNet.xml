@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<root xmlns="urn:schemas-upnp-org:device-1-0">
+  <specVersion>
+    <major>1</major>
+    <minor>0</minor>
+  </specVersion>
+  <device>
+    <deviceType>urn:schemas-julius-com:device:tellstick:1</deviceType>
+    <friendlyName>Control you telldus live devices</friendlyName>
+    <manufacturer>Julius</manufacturer>
+    <manufacturerURL>http://www.telldus.com</manufacturerURL>
+    <modelDescription>Telldus live api interface</modelDescription>
+    <modelName>TellstickNet</modelName>
+    <modelNumber>1.0</modelNumber>
+	<protocol>raw</protocol>
+	<handleChildren>1</handleChildren>
+    <serviceList>
+    </serviceList>
+    <implementationList>
+      <implementationFile>I_TellstickNet.xml</implementationFile>
+    </implementationList>
+    <presentationURL>/tvdevicepres.html</presentationURL>
+  </device>
+</root>
