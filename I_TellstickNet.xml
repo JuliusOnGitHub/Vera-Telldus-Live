@@ -19,5 +19,14 @@
 		return true
       </run>
     </action>
+	<action>
+      <serviceId>urn:micasaverde-com:serviceId:HaDevice1</serviceId>
+      <name>Poll</name>
+      <run>
+        task("Telldus sensor sync start", TASK_BUSY)
+        -- Force refreshCache to get called in a Timer
+        luup.call_timer("refreshCache", 1, "1", "")
+      </run>
+    </action>	
   </actionList>  
 </implementation>

@@ -6,6 +6,7 @@
   </specVersion>
   <device>
     <deviceType>urn:schemas-julius-com:device:tellstick:1</deviceType>
+	<staticJson>D_TellstickNet.json</staticJson> 
     <friendlyName>Control you telldus live devices</friendlyName>
     <manufacturer>Julius</manufacturer>
     <manufacturerURL>http://www.telldus.com</manufacturerURL>
@@ -15,7 +16,17 @@
 	<protocol>raw</protocol>
 	<handleChildren>1</handleChildren>
     <serviceList>
-    </serviceList>
+		<service>
+			<serviceType>urn:julius-com:service:telldusapi:1</serviceType>
+			<serviceId>urn:upnp-julius-com:serviceId:telldusapi</serviceId>
+			<SCPDURL>S_TellstickNet.xml</SCPDURL>
+		</service>	
+		<service>
+			<serviceType>urn:schemas-micasaverde-com:service:HaDevice:1</serviceType>
+			<serviceId>urn:micasaverde-com:serviceId:HaDevice1</serviceId>
+			<SCPDURL>S_HaDevice1.xml</SCPDURL>
+		</service>    
+	</serviceList>
     <implementationList>
       <implementationFile>I_TellstickNet.xml</implementationFile>
     </implementationList>

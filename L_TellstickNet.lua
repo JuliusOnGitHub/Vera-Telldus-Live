@@ -8,12 +8,44 @@ local private_key = "ZUXEVEGA9USTAZEWRETHAQUBUR69U6EF"
 local token = "8dd9b45e182e8ed141f93263301ad6be0527e295e"
 local token_secret = "938606c765fa040bcc45826f2d60bf7b"
 
-luup.variable_set("urn:micasaverde-com:serviceId:TellstickNet1","public_key", public_key, lul_device)
-luup.variable_set("urn:micasaverde-com:serviceId:TellstickNet1","private_key", private_key, lul_device)
-luup.variable_set("urn:micasaverde-com:serviceId:TellstickNet1","token", token, lul_device)
-luup.variable_set("urn:micasaverde-com:serviceId:TellstickNet1","token_secret", token_secret, lul_device)
+luup.variable_set("urn:upnp-julius-com:serviceId:telldusapi","PublicKey", public_key, lul_device)
+luup.variable_set("urn:upnp-julius-com:serviceId:telldusapi","PrivateKey", private_key, lul_device)
+luup.variable_set("urn:upnp-julius-com:serviceId:telldusapi","Token", token, lul_device)
+luup.variable_set("urn:upnp-julius-com:serviceId:telldusapi","TokenSecret", token_secret, lul_device)
+
+local HADEVICE_SID = "urn:micasaverde-com:serviceId:HaDevice1"
+local NETWORK_SID = "urn:micasaverde-com:serviceId:ZWaveNetwork1"
 
 local api_url = "http://api.telldus.com/json"
+
+local MSG_CLASS = "TelldusLive"
+local taskHandle = -1
+local TASK_ERROR = 2
+local TASK_ERROR_PERM = -2
+local TASK_SUCCESS = 4
+local TASK_BUSY = 1
+
+local function log(text, level)
+    luup.log(string.format("%s: %s", MSG_CLASS, text), (level or 50))
+end
+
+local function task(text, mode)
+    luup.log("task " .. text)
+    if (mode == TASK_ERROR_PERM) then
+        taskHandle = luup.task(text, TASK_ERROR, MSG_CLASS, taskHandle)
+    else
+        taskHandle = luup.task(text, mode, MSG_CLASS, taskHandle)
+
+        -- Clear the previous error, since they're all transient
+        if (mode ~= TASK_SUCCESS) then
+            luup.call_delay("clearTask", 30, "", false)
+        end
+    end
+end
+
+function clearTask()
+    task("Clearing...", TASK_SUCCESS)
+end
 
 local function findChild(parentDevice, id)
     for k, v in pairs(luup.devices) do
@@ -60,6 +92,27 @@ local function getSensors()
 	return JSON.decode(response_body[1])
 end
 
+local function updateSensors(sensors)
+	for k, s in pairs(sensors.sensor) do
+		if(s.name) then
+			if (s.temp) then
+				local device = findChild(Telldus_device, s.id .. "_temp")
+				if(device) then
+					luup.log("Setting sensor " .. s.name .. " temperature to " .. s.temp)
+					luup.variable_set("urn:upnp-org:serviceId:TemperatureSensor1", "CurrentTemperature", s.temp, device)
+				end
+			end
+			if (s.humidity) then
+				local device = findChild(Telldus_device, s.id .. "_humidity")
+				if(device) then
+					luup.log("Setting sensor " .. s.name .. " humidity to " .. s.temp)
+					luup.variable_set("urn:micasaverde-com:serviceId:HumiditySensor1", "CurrentLevel", s.humidity, device)
+				end
+			end
+		end
+	end
+end
+
 local function addAll(devices, sensors, lul_device)
 	child_devices = luup.chdev.start(lul_device);
 	for k, d in pairs(devices.device) do
@@ -75,21 +128,32 @@ local function addAll(devices, sensors, lul_device)
 		if(s.name) then
 			luup.log("Sensor : " .. s.id .. " named " .. s.name)
 			if (s.temp) then
-				luup.chdev.append(lul_device, child_devices, s.id .. "_temp", s.name .. " temperature", "", "D_TemperatureSensor1.xml", "", "urn:upnp-org:serviceId:TemperatureSensor1,CurrentTemperature=" .. s.temp, false)
+				luup.chdev.append(lul_device, child_devices, s.id .. "_temp", s.name .. " temperature", "", "D_TemperatureSensor1.xml", "", "", false)
 			end
 			if (s.humidity) then
-				luup.chdev.append(lul_device, child_devices, s.id .. "_humidity", s.name .. " humidity", "", "D_HumiditySensor1.xml", "", "urn:micasaverde-com:serviceId:HumiditySensor1,CurrentLevel=" .. s.humidity, false)
+				luup.chdev.append(lul_device, child_devices, s.id .. "_humidity", s.name .. " humidity", "", "D_HumiditySensor1.xml", "", "", false)
 			end
 		end
 	end
-
 	luup.chdev.sync(lul_device, child_devices)
+	Telldus_device = lul_device
+	updateSensors(sensors)
+end
+
+function refreshCache()
+--	task("Telldus sensor sync start", TASK_BUSY)	
+--	task("Telldus sensor sync start successful.",TASK_SUCCESS)
+	luup.log("Telldus timer called...")
+	updateSensors(getSensors())
+	luup.call_timer("refreshCache", 1, "30", "")	
+	luup.log("Telldus timer exit.")
 end
 
 function lug_startup(lul_device)
-	local devices = getDevices();
-	local sensors = getSensors();
+	local devices = getDevices()
+	local sensors = getSensors()
 	addAll(devices, sensors, lul_device);
+	luup.call_timer("refreshCache", 1, "30", "")	
 end
 
 local function deviceCommand(device_id, command)
