@@ -19,6 +19,24 @@
 		return true
       </run>
     </action>
+    <action>
+      <serviceId>urn:upnp-org:serviceId:Dimming1</serviceId>
+      <name>SetLoadLevelTarget</name>
+      <run>
+		luup.log("Set dim level for telldus device: " .. lul_settings.newLoadlevelTarget)
+		
+		if(lul_settings.newLoadlevelTarget == "0") then
+			deviceCommand(luup.devices[lul_device].id, "turnOff")
+			luup.variable_set("urn:upnp-org:serviceId:Dimming1", "LoadLevelTarget", lul_settings.newLoadlevelTarget, lul_device)
+		else
+			setDimLevel(luup.devices[lul_device].id, lul_settings.newLoadlevelTarget)
+			luup.variable_set("urn:upnp-org:serviceId:Dimming1", "LoadLevelTarget", lul_settings.newLoadlevelTarget, lul_device)
+		end
+
+		
+		return true
+      </run>
+    </action>
 	<action>
       <serviceId>urn:micasaverde-com:serviceId:HaDevice1</serviceId>
       <name>Poll</name>
@@ -27,6 +45,6 @@
         -- Force refreshCache to get called in a Timer
         luup.call_timer("refreshCache", 1, "1", "")
       </run>
-    </action>	
+	  </action>	
   </actionList>  
 </implementation>
