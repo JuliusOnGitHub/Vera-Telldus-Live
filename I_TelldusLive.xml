@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <implementation>
-  <files>L_TellstickNet.lua</files>
+  <files>L_TelldusLive.lua</files>
   <startup>lug_startup</startup>
   <actionList>
     <action>

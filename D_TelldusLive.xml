@@ -5,13 +5,13 @@
     <minor>0</minor>
   </specVersion>
   <device>
-    <deviceType>urn:schemas-julius-com:device:tellstick:1</deviceType>
+    <deviceType>urn:schemas-telldus-se:device:telldusapi:1</deviceType>
 	<staticJson>D_TellstickNet.json</staticJson> 
     <friendlyName>Control you telldus live devices</friendlyName>
     <manufacturer>Julius</manufacturer>
-    <manufacturerURL>http://www.telldus.com</manufacturerURL>
+    <manufacturerURL>https://github.com/JuliusOnGitHub/VeraTelldusLive</manufacturerURL>
     <modelDescription>Telldus live api interface</modelDescription>
-    <modelName>TellstickNet</modelName>
+    <modelName>TelldusLive</modelName>
     <modelNumber>1.0</modelNumber>
 	<protocol>raw</protocol>
 	<handleChildren>1</handleChildren>
@@ -28,7 +28,7 @@
 		</service>    
 	</serviceList>
     <implementationList>
-      <implementationFile>I_TellstickNet.xml</implementationFile>
+      <implementationFile>I_TelldusLive.xml</implementationFile>
     </implementationList>
     <presentationURL>/tvdevicepres.html</presentationURL>
   </device>

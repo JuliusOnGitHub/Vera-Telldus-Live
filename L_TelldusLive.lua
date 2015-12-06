@@ -13,10 +13,10 @@ local private_key = "ZUXEVEGA9USTAZEWRETHAQUBUR69U6EF"
 local token = "8dd9b45e182e8ed141f93263301ad6be0527e295e"
 local token_secret = "938606c765fa040bcc45826f2d60bf7b"
 
-luup.variable_set("urn:upnp-julius-com:serviceId:telldusapi","PublicKey", public_key, lul_device)
-luup.variable_set("urn:upnp-julius-com:serviceId:telldusapi","PrivateKey", private_key, lul_device)
-luup.variable_set("urn:upnp-julius-com:serviceId:telldusapi","Token", token, lul_device)
-luup.variable_set("urn:upnp-julius-com:serviceId:telldusapi","TokenSecret", token_secret, lul_device)
+luup.variable_set("urn:upnp-telldus-se:serviceId:telldusapi","PublicKey", public_key, lul_device)
+luup.variable_set("urn:upnp-telldus-se:serviceId:telldusapi","PrivateKey", private_key, lul_device)
+luup.variable_set("urn:upnp-telldus-se:serviceId:telldusapi","Token", token, lul_device)
+luup.variable_set("urn:upnp-telldus-se:serviceId:telldusapi","TokenSecret", token_secret, lul_device)
 
 local HADEVICE_SID = "urn:micasaverde-com:serviceId:HaDevice1"
 local NETWORK_SID = "urn:micasaverde-com:serviceId:ZWaveNetwork1"
@@ -168,7 +168,8 @@ function updateDevices(devices)
 				log("Setting device " .. d.name .. " Tripped to " .. state)
 				luup.variable_set(SECURITY_SID, TRIPPED, state, key)
 				local armed, tstamp = luup.variable_get(SECURITY_SID, ARMED, key)
-				if(armed == 1) then
+				local armedTripped = luup.variable_get(SECURITY_SID, ARMEDTRIPPED, key)
+				if(armed == "1" and armedTripped ~= "0") then
 					if(activityIn(tstamp, os.time(), d.id)) then
 						luup.variable_set(SECURITY_SID, ARMEDTRIPPED, "1")
 					end
