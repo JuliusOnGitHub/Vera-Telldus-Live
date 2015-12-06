@@ -1,5 +1,9 @@
+if(not lul_device) then
+	require("luup")
+	lul_device = "12"
+end
+
 local http=require("socket.http")
-local https = require ("ssl.https")
 local ltn12 = require("ltn12")
 local JSON = require("dkjson")
 local bit = require("bit")
@@ -16,7 +20,17 @@ luup.variable_set("urn:upnp-julius-com:serviceId:telldusapi","TokenSecret", toke
 
 local HADEVICE_SID = "urn:micasaverde-com:serviceId:HaDevice1"
 local NETWORK_SID = "urn:micasaverde-com:serviceId:ZWaveNetwork1"
-local SENSOR_REFRESH_INTERVAL = "60"
+local SECURITY_SID = "urn:micasaverde-com:serviceId:SecuritySensor1"
+local SWITCH_SID = "urn:upnp-org:serviceId:SwitchPower1"
+local TEMP_SID = "urn:upnp-org:serviceId:TemperatureSensor1"
+local HUM_SID = "urn:micasaverde-com:serviceId:HumiditySensor1"
+local DIM_SID = "urn:upnp-org:serviceId:Dimming1"
+
+local MOTIONSENSOR_DT = "urn:schemas-micasaverde-com:device:MotionSensor:1"
+local DOORSENSOR_DT = "urn:schemas-micasaverde-com:device:DoorSensor:1"
+local DIM_DT = "urn:schemas-upnp-org:device:DimmableLight:1"
+
+local REFRESH_INTERVAL = "30"
 
 local api_url = "http://api.telldus.com/json"
 
@@ -27,14 +41,22 @@ local TASK_ERROR_PERM = -2
 local TASK_SUCCESS = 4
 local TASK_BUSY = 1
 
+local TRIPPED = "Tripped"
+local ARMED = "Armed"
+local ARMEDTRIPPED = "ArmedTripped"
+local STATUS = "Status"
+local CURRENTLEVEL = "CurrentLevel"
+local CURRENTTEMPERATURE = "CurrentTemperature"
+local LOADLEVELSTATUS = "LoadLevelStatus"
+
 local TELLSTICK_DIM = 16
 
 local function log(text, level)
-    luup.log(string.format("%s: %s", MSG_CLASS, text), (level or 50))
+    --luup.log(string.format("%s: %s", MSG_CLASS, text), (level or 25))
 end
 
 local function task(text, mode)
-    luup.log("task " .. text)
+    log("task " .. text)
     if (mode == TASK_ERROR_PERM) then
         taskHandle = luup.task(text, TASK_ERROR, MSG_CLASS, taskHandle)
     else
@@ -54,13 +76,13 @@ end
 local function findChild(parentDevice, id)
     for k, v in pairs(luup.devices) do
         if (v.device_num_parent == parentDevice and v.id == id) then
-            return k
+            return v, k
         end
     end
 end
 
 local function getHeaders(url)
-	local now=os.time() 
+	local now=os.time()
 	local nonce = now
 	local post_headers="realm=\""..url.."\", oauth_timestamp=\""..now.."\", oauth_version=\"1.0\", oauth_signature_method=\"PLAINTEXT\", oauth_consumer_key=\""..public_key.."\", oauth_token=\""..token.."\", oauth_signature=\""..private_key.."%26"..token_secret.."\", oauth_nonce=\""..nonce.."\""
 	return {
@@ -71,7 +93,7 @@ end
 local function request(url)
 	local response_body = {}
 
-	luup.log("Sending request to url : " .. url)
+	log("Sending request to url : " .. url)
 
 	local content, status = http.request {
 		method = "GET";
@@ -79,20 +101,20 @@ local function request(url)
 		headers = getHeaders(url);
 		sink = ltn12.sink.table(response_body);
 	}
-	luup.log("Response code status : " .. status)
+	log("Response code status : " .. status)
 	if(response_body) then
-		luup.log("Response body : " .. response_body[1])
+		log("Response body : " .. response_body[1])
 	end
 	return response_body
 end
 
-local function getDevices()
+function getDevices()
     local telldus_url= api_url .. "/devices/list?supportedMethods=951"
 	local response_body = request(telldus_url)
 	return JSON.decode(response_body[1])
 end
 
-local function getSensors()
+function getSensors()
     local telldus_url= api_url .. "/sensors/list?includeIgnored=0&includeValues=1"
 	local response_body = request(telldus_url)
 	return JSON.decode(response_body[1])
@@ -102,78 +124,177 @@ local function updateSensors(sensors)
 	for k, s in pairs(sensors.sensor) do
 		if(s.name) then
 			if (s.temp) then
-				local device = findChild(Telldus_device, s.id .. "_temp")
+				local device, key = findChild(Telldus_device, s.id .. "_temp")
 				if(device) then
-					luup.log("Setting sensor " .. s.name .. " temperature to " .. s.temp)
-					luup.variable_set("urn:upnp-org:serviceId:TemperatureSensor1", "CurrentTemperature", s.temp, device)
+					log("Setting sensor " .. s.name .. " temperature to " .. s.temp)
+					luup.variable_set(TEMP_SID, CURRENTTEMPERATURE, s.temp, key)
 				end
 			end
 			if (s.humidity) then
-				local device = findChild(Telldus_device, s.id .. "_humidity")
+				local device, key = findChild(Telldus_device, s.id .. "_humidity")
 				if(device) then
-					luup.log("Setting sensor " .. s.name .. " humidity to " .. s.temp)
-					luup.variable_set("urn:micasaverde-com:serviceId:HumiditySensor1", "CurrentLevel", s.humidity, device)
+					log("Setting sensor " .. s.name .. " humidity to " .. s.temp)
+					luup.variable_set(HUM_SID, CURRENTLEVEL, s.humidity, key)
 				end
 			end
 		end
 	end
 end
 
-local function addAll(devices, sensors, lul_device)
+local function getVeraState(telldusState)
+	if telldusState == 1 then
+		return 1
+	end
+	return 0
+end
+
+local function getVeraDimLevel(telldusLevel)
+	return telldusLevel * 100 / 255
+end
+function activityIn(from, to, id)
+    local telldus_url= api_url .. "/device/history?id="..id.."&from=" .. from .."&to=" .. to
+	local response_body = request(telldus_url)
+	local history = JSON.decode(response_body[1])
+	return not (next(history.history) == nil)
+end
+function updateDevices(devices)
+	for k, d in pairs(devices.device) do
+		log("Device : " .. d.id .. " named " .. d.name .. " updating state to " .. d.state)
+		local device, key = findChild(Telldus_device, d.id)
+		local state = tostring(getVeraState(d.state))
+		if(device) then
+			log("Device type : " .. device.device_type)
+			if (string.match(device.device_type, "Motion") or string.match(device.device_type, "Door")) then
+				log("Setting device " .. d.name .. " Tripped to " .. state)
+				luup.variable_set(SECURITY_SID, TRIPPED, state, key)
+				local armed, tstamp = luup.variable_get(SECURITY_SID, ARMED, key)
+				if(armed == 1) then
+					if(activityIn(tstamp, os.time(), d.id)) then
+						luup.variable_set(SECURITY_SID, ARMEDTRIPPED, "1")
+					end
+				end
+			elseif (string.match(device.device_type, "Dim")) then
+				local level = 0
+				if(d.state == TELLSTICK_DIM) then
+					level = tostring(getVeraDimLevel(tonumber(d.statevalue)))
+				elseif(d.state == 1) then
+					level = 100
+				end
+				log("Setting device " .. d.name .. " LoadLevelStatus to " .. level)
+				luup.variable_set(DIM_SID, LOADLEVELSTATUS, level, key)
+			else
+				log("Setting device " .. d.name .. " Status to " .. state)
+				luup.variable_set(SWITCH_SID, STATUS, state, key)
+			end
+		end
+	end
+end
+
+local function getDeviceInfo(id)
+    local telldus_url= api_url .. "/device/info?id="..id.."&supportedMethods=951"
+	local response_body = request(telldus_url)
+	return JSON.decode(response_body[1])
+end
+
+
+function addAll(devices, sensors, lul_device)
 	child_devices = luup.chdev.start(lul_device);
 	for k, d in pairs(devices.device) do
-		luup.log("Device : " .. d.id .. " named " .. d.name .. " supporting method " .. tostring(d.methods))
-		if(bit.band(d.methods, TELLSTICK_DIM) > 0) then
-			luup.chdev.append(lul_device, child_devices, d.id, d.name, "", "D_DimmableLight1.xml", "", "urn:upnp-org:serviceId:Dimming1,LoadLevelTarget=" .. tostring(d.statevalue), false)
+		log("Device : " .. d.id .. " named " .. d.name .. " supporting methods : " .. tostring(d.methods))
+		local deviceinfo = getDeviceInfo(d.id)
+		log("Device model : " .. deviceinfo.model)
+		if(string.match(deviceinfo.model, "magnet")) then
+			log("Device " .. d.name .. " is a magnet")
+			luup.chdev.append(lul_device, child_devices, d.id, d.name, "", "D_DoorSensor1.xml", "", "", false)
+		elseif (string.match(deviceinfo.model, "pir")) then
+			log("Device " .. d.name .. " is a motion sensor")
+			luup.chdev.append(lul_device, child_devices, d.id, d.name, "", "D_MotionSensor1.xml", "", "", false)
 		else
-			local state = 0
-			if d.state == 1 then
-				state = 1
+			log("Device " .. d.name .. " is dimmer or switch")
+			if(bit.band(d.methods, TELLSTICK_DIM) > 0) then
+				luup.chdev.append(lul_device, child_devices, d.id, d.name, "", "D_DimmableLight1.xml", "", "", false)
+			else
+				luup.chdev.append(lul_device, child_devices, d.id, d.name, "", "D_BinaryLight1.xml", "", "", false)
 			end
-			luup.chdev.append(lul_device, child_devices, d.id, d.name, "", "D_BinaryLight1.xml", "", "urn:upnp-org:serviceId:SwitchPower1,Status=" .. tostring(state), false)
 		end
+
 	end
 
 	for k, s in pairs(sensors.sensor) do
 		if(s.name) then
-			luup.log("Sensor : " .. s.id .. " named " .. s.name)
+			log("Sensor : " .. s.id .. " named " .. s.name)
 			if (s.temp) then
 				luup.chdev.append(lul_device, child_devices, s.id .. "_temp", s.name .. " temperature", "", "D_TemperatureSensor1.xml", "", "", false)
 			end
 			if (s.humidity) then
-				luup.chdev.append(lul_device, child_devices, s.id .. "_humidity", s.name .. " humidity", "", "D_HumiditySensor1.xml", "", "", false)
+				luup.chdev.append(lul_device, child_devices, s.id .. "_humidity", s.name .. " humidity", "", "D_HumiditySensor1.xml", "", false)
 			end
 		end
 	end
 	luup.chdev.sync(lul_device, child_devices)
 	Telldus_device = lul_device
 	updateSensors(sensors)
+	updateDevices(devices)
 end
 
 function refreshCache()
-	luup.log("Telldus timer called...")
+	log("Telldus timer called...")
 	updateSensors(getSensors())
-	luup.call_timer("refreshCache", 1, SENSOR_REFRESH_INTERVAL, "")	
-	luup.log("Telldus timer exit.")
+	updateDevices(getDevices())
+	luup.call_timer("refreshCache", 1, REFRESH_INTERVAL, "")
+	log("Telldus timer exit.")
 end
 
 function lug_startup(lul_device)
 	local devices = getDevices()
 	local sensors = getSensors()
 	addAll(devices, sensors, lul_device);
-	luup.call_timer("refreshCache", 1, SENSOR_REFRESH_INTERVAL, "")	
+	luup.call_timer("refreshCache", 1, REFRESH_INTERVAL, "")
 end
 
-local function setDimLevel(device_id, level)
-	luup.log("Setting dim level on device " .. device_id .. " to " .. level .. ".")
-	local telldusLevel = tonumber(level) * 255 / 100
-    local telldus_url=api_url .. "/device/dim".."?id="..device_id .. "&level=" .. tostring(telldusLevel)
-	request(telldus_url)
-end
-
-local function deviceCommand(device_id, command)
-	luup.log("Turning device " .. device_id .. " " .. command .. ".")
+local function deviceCommand(device_id, command, parameters)
+	log("Turning device " .. device_id .. " " .. command .. ".")
     local telldus_url=api_url .. "/device/"..command.."?id="..device_id
-	request(telldus_url)
+	if(parameters) then
+		telldus_url = telldus_url .. parameters
+	end
+	return request(telldus_url)
 end
 
+function setDimLevel(device_id, level)
+	log("Setting dim level on device " .. device_id .. " to " .. level .. ".")
+	local telldusLevel = tonumber(level) * 255 / 100
+	return deviceCommand(device_id, "dim", "&level=" .. tostring(telldusLevel))
+end
+
+function setTarget()
+	if(lul_settings.newTargetValue == "1") then
+		deviceCommand(luup.devices[lul_device].id, "turnOn")
+	else
+		deviceCommand(luup.devices[lul_device].id, "turnOff")
+	end
+
+	luup.variable_set(SWITCH_SID, STATUS, lul_settings.newTargetValue, lul_device)
+
+	return true
+end
+
+function setLoadLevelTarget()
+	if(lul_settings.newLoadlevelTarget == "0") then
+		deviceCommand(luup.devices[lul_device].id, "turnOff")
+	else
+		setDimLevel(luup.devices[lul_device].id, lul_settings.newLoadlevelTarget)
+	end
+
+	luup.variable_set(DIM_SID, LOADLEVELSTATUS, lul_settings.newLoadlevelTarget, lul_device)
+
+	return true
+end
+
+function setArmed(lul_device, lul_settings)
+	luup.variable_set(SECURITY_SID, ARMED, lul_settings.newArmedValue, lul_device)
+	if(lul_settings.newArmedValue == "0") then
+		luup.variable_set(SECURITY_SID, ARMEDTRIPPED, "0")
+	end
+	return true
+end

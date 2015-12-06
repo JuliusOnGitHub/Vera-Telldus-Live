@@ -8,15 +8,7 @@
       <name>SetTarget</name>
       <run>
 		luup.log("SetTarget for telldus device: " .. lul_settings.newTargetValue)
-		if(lul_settings.newTargetValue == "1") then
-			deviceCommand(luup.devices[lul_device].id, "turnOn")
-		else
-			deviceCommand(luup.devices[lul_device].id, "turnOff")
-		end
-		
-		luup.variable_set("urn:upnp-org:serviceId:SwitchPower1", "Status", lul_settings.newTargetValue, lul_device)
-		
-		return true
+		return setTarget()
       </run>
     </action>
     <action>
@@ -24,17 +16,15 @@
       <name>SetLoadLevelTarget</name>
       <run>
 		luup.log("Set dim level for telldus device: " .. lul_settings.newLoadlevelTarget)
-		
-		if(lul_settings.newLoadlevelTarget == "0") then
-			deviceCommand(luup.devices[lul_device].id, "turnOff")
-			luup.variable_set("urn:upnp-org:serviceId:Dimming1", "LoadLevelTarget", lul_settings.newLoadlevelTarget, lul_device)
-		else
-			setDimLevel(luup.devices[lul_device].id, lul_settings.newLoadlevelTarget)
-			luup.variable_set("urn:upnp-org:serviceId:Dimming1", "LoadLevelTarget", lul_settings.newLoadlevelTarget, lul_device)
-		end
-
-		
-		return true
+		return setLoadLevelTarget()
+      </run>
+    </action>
+    <action>
+      <serviceId>urn:micasaverde-com:serviceId:SecuritySensor1</serviceId>
+      <name>SetArmed</name>
+      <run>
+		luup.log("Set armed for telldus device: " .. lul_device .. " with arm value : " ..lul_settings.newArmedValue)
+		return setArmed(lul_device, lul_settings)
       </run>
     </action>
 	<action>
