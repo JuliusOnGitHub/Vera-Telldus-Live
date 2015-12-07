@@ -35,6 +35,16 @@
         -- Force refreshCache to get called in a Timer
         luup.call_timer("refreshCache", 1, "1", "")
       </run>
-	  </action>	
+	</action>	
+    <action>
+      <serviceId>urn:upnp-telldus-se:serviceId:TelldusApi1</serviceId>
+      <name>SetPublicKey</name>
+      <run>
+		luup.log("SetPublicKey telldus device: " .. newPublicKey)
+		for k, v in pairs(lul_settings) do
+			luup.log("Telldus lul setting (" .. tostring(k) .. ", " .. tostring(v) .. ")")
+		end
+      </run>
+    </action>
   </actionList>  
 </implementation>

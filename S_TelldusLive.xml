@@ -31,19 +31,40 @@
       <defaultValue></defaultValue>
       <shortCode></shortCode>
     </stateVariable>
-    <stateVariable>
-      <name>Period</name>
-      <sendEventsAttribute>no</sendEventsAttribute>
-      <dataType>ui4</dataType>
-      <defaultValue>60</defaultValue>
-    </stateVariable>
   </serviceStateTable>
   <actionList>
     <action>
-      <name>SetPeriod</name>
+      <name>SetPublicKey</name>
       <argumentList>
         <argument>
-          <name>period</name>
+          <name>publickey</name>
+          <direction>in</direction>
+        </argument>
+      </argumentList>
+    </action>
+    <action>
+      <name>SetPrivateKey</name>
+      <argumentList>
+        <argument>
+          <name>privatekey</name>
+          <direction>in</direction>
+        </argument>
+      </argumentList>
+    </action>
+    <action>
+      <name>SetToken</name>
+      <argumentList>
+        <argument>
+          <name>token</name>
+          <direction>in</direction>
+        </argument>
+      </argumentList>
+    </action>
+    <action>
+      <name>SetTokenSecret</name>
+      <argumentList>
+        <argument>
+          <name>tokensecret</name>
           <direction>in</direction>
         </argument>
       </argumentList>

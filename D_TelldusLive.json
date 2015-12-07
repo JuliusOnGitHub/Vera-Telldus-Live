@@ -1,11 +1,11 @@
 {
-    "flashicon": "icons\/generic_sensor.swf",
+    "default_icon": "icons/generic_sensor.swf",
     "imgIconBody": "",
     "imgIconDimmable": "",
     "imgIconTurnable": "",
     "imgIconMin": "",
     "imgIconMax": "",
-    "halloIconsDir": "pics\/hallo",
+    "halloIconsDir": "pics/hallo",
     "inScene": "1",
     "DisplayStatus": {},
     "doc_url": {
@@ -47,7 +47,7 @@
                 {
                     "id": "2",
                     "scenegroup": "2",
-		    "isSingle": "1"
+                    "isSingle": "1"
                 }
             ],
             "Control": [
@@ -55,131 +55,55 @@
                     "ControlType": "label",
                     "Label": {
                         "lang_tag": "device_settings_page",
-                        "text": "Public Key"
+                        "text": "Public Key:"
                     },
                     "Display": {
                         "Top": 20,
                         "Left": 50,
-                        "Width": 120,
-                        "Height": 20
-                    }
-                },
-                {
-                    "ControlType": "variable",
-                    "Display": {
-                        "Service": "urn:upnp-julius-com:serviceId:telldusapi",
-                        "Variable": "PublicKey",
-                        "Top": 20,
-                        "Left": 170,
-                        "Width": 240,
-                        "Height": 20
-                    }
-                },
-                {
-                    "ControlType": "label",
-                    "Label": {
-                        "lang_tag": "device_settings_page",
-                        "text": "Private Key: "
-                    },
-                    "Display": {
-                        "Top": 60,
-                        "Left": 50,
-                        "Width": 120,
-                        "Height": 20
-                    }
-                },
-                {
-                    "ControlType": "variable",
-                    "Display": {
-                        "Service": "urn:upnp-julius-com:serviceId:telldusapi",
-                        "Variable": "PrivateKey",
-                        "Top": 60,
-                        "Left": 170,
-                        "Width": 240,
-                        "Height": 20
-                    }
-                },
-                {
-                    "ControlType": "label",
-                    "Label": {
-                        "lang_tag": "device_settings_page",
-                        "text": "Token: "
-                    },
-                    "Display": {
-                        "Top": 90,
-                        "Left": 50,
-                        "Width": 120,
-                        "Height": 20
-                    }
-                },
-                {
-                    "ControlType": "variable",
-                    "Display": {
-                        "Service": "urn:upnp-julius-com:serviceId:telldusapi",
-                        "Variable": "Token",
-                        "Top": 90,
-                        "Left": 170,
-                        "Width": 240,
-                        "Height": 20
-                    }
-                },
-               
-                {
-                    "ControlType": "label",
-                    "Label": {
-                        "lang_tag": "device_settings_page",
-                        "text": "Last Update:"
-                    },
-                    "Display": {
-                        "Top": 105,
-                        "Left": 50,
-                        "Width": 120,
-                        "Height": 20
-                    }
-                },
-                {
-                    "ControlType": "variable",
-                    "Display": {
-                        "Service": "urn:micasaverde-com:serviceId:HaDevice1",
-                        "Variable": "LastUpdate",
-                        "Top": 105,
-                        "Left": 210,
                         "Width": 100,
                         "Height": 20
                     }
                 },
                 {
-                    "ControlGroup": "2",
-                    "ControlType": "button",
-                    "Label": {
-                        "lang_tag": "updateSensorValues",
-                        "text": "Update"
-                    },
-                    "top": "0",
-                    "left": "0",
-                    "x": "1",
-                    "y": "1",
+                    "ControlType": "input",
+                    "Id": "newPublicKey",
                     "Display": {
-                        "Value": "1",
-                        "Top": 120,
-                        "Left": 50,
-                        "Width": 75,
-                        "Height": 18
+                        "Service": "urn:upnp-telldus-se:serviceId:TelldusApi1",
+                        "Variable": "PublicKey",
+                        "Top": 20,
+                        "Left": 120,
+                        "Width": 320,
+                        "Height": 20
+                    }
+                },
+                {
+                    "ControlType": "button",
+					"Label": {
+                        "lang_tag": "setPlulicKeyButtonLabel",
+                        "text": "Set"
+                    },					
+                    "Display": {
+                        "Service": "urn:upnp-telldus-se:serviceId:TelldusApi1",
+                        "Variable": "PublicKey",
+                        "Top": 20,
+                        "Left": 450,
+                        "Width": 100,
+                        "Height": 20
                     },
                     "Command": {
-                        "Service": "urn:micasaverde-com:serviceId:HaDevice1",
-                        "Action": "Poll",
+                        "Service": "urn:upnp-telldus-se:serviceId:TelldusApi1",
+                        "Action": "SetPublicKey",
                         "Parameters": [
                             {
-                                "Name": "updateCheck",
-                                "Value": "1"
+                                "Name": "newPublickey",
+                                "Id": "newPublickey"
                             }
                         ]
                     }
-                },
+                }
             ]
         },
-		{
+        {
             "Label": {
                 "lang_tag": "advanced",
                 "text": "Advanced"
@@ -188,11 +112,8 @@
             "TabType": "javascript",
             "ScriptName": "shared.js",
             "Function": "advanced_device"
-        }		
-    ],
-    "DeviceType": "urn:julius-com:service:telldusapi:1",
-    "eventList2": [
-            ]
         }
-    ]
+    ],
+    "DeviceType": "urn:schemas-telldus-se:device:telldusapi:1",
+    "eventList2": []
 }

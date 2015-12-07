@@ -8,16 +8,21 @@ local ltn12 = require("ltn12")
 local JSON = require("dkjson")
 local bit = require("bit")
 
+--local public_key = ""
+--local private_key = ""
+--local token = ""
+--local token_secret = ""
+
 local public_key = "FEHUVEW84RAFR5SP22RABURUPHAFRUNU"
+
 local private_key = "ZUXEVEGA9USTAZEWRETHAQUBUR69U6EF"
+
 local token = "8dd9b45e182e8ed141f93263301ad6be0527e295e"
+
 local token_secret = "938606c765fa040bcc45826f2d60bf7b"
 
-luup.variable_set("urn:upnp-telldus-se:serviceId:telldusapi","PublicKey", public_key, lul_device)
-luup.variable_set("urn:upnp-telldus-se:serviceId:telldusapi","PrivateKey", private_key, lul_device)
-luup.variable_set("urn:upnp-telldus-se:serviceId:telldusapi","Token", token, lul_device)
-luup.variable_set("urn:upnp-telldus-se:serviceId:telldusapi","TokenSecret", token_secret, lul_device)
 
+local TELLDUS_SID = "urn:upnp-telldus-se:serviceId:TelldusApi1"
 local HADEVICE_SID = "urn:micasaverde-com:serviceId:HaDevice1"
 local NETWORK_SID = "urn:micasaverde-com:serviceId:ZWaveNetwork1"
 local SECURITY_SID = "urn:micasaverde-com:serviceId:SecuritySensor1"
@@ -52,7 +57,7 @@ local LOADLEVELSTATUS = "LoadLevelStatus"
 local TELLSTICK_DIM = 16
 
 local function log(text, level)
-    --luup.log(string.format("%s: %s", MSG_CLASS, text), (level or 25))
+    luup.log(string.format("%s: %s", MSG_CLASS, text), (level or 25))
 end
 
 local function task(text, mode)
@@ -247,10 +252,28 @@ function refreshCache()
 end
 
 function lug_startup(lul_device)
-	local devices = getDevices()
-	local sensors = getSensors()
-	addAll(devices, sensors, lul_device);
-	luup.call_timer("refreshCache", 1, REFRESH_INTERVAL, "")
+	log("Entering TelldusLive startup..")
+	
+	luup.variable_set(TELLDUS_SID,"PublicKey", public_key, lul_device)
+	luup.variable_set(TELLDUS_SID,"PrivateKey", private_key, lul_device)
+	luup.variable_set(TELLDUS_SID,"Token", token, lul_device)
+	luup.variable_set(TELLDUS_SID,"TokenSecret", token_secret, lul_device)
+
+	public_key = luup.variable_get(TELLDUS_SID,"PublicKey", lul_device)
+	private_key = luup.variable_get(TELLDUS_SID,"PrivateKey", lul_device)
+	token = luup.variable_get(TELLDUS_SID,"Token", lul_device)
+	token_secret = luup.variable_get(TELLDUS_SID,"TokenSecret", lul_device)
+	
+	if (public_key == nil or private_key == nil or token == nil or token_secret == nil) then
+        local msg = "Need telldus keys to run."
+		log(msg)
+        return
+    else
+		local devices = getDevices()
+		local sensors = getSensors()
+		addAll(devices, sensors, lul_device);
+		luup.call_timer("refreshCache", 1, REFRESH_INTERVAL, "")
+	end
 end
 
 local function deviceCommand(device_id, command, parameters)
