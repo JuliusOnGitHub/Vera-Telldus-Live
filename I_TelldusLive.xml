@@ -8,7 +8,7 @@
       <name>SetTarget</name>
       <run>
 		luup.log("SetTarget for telldus device: " .. lul_settings.newTargetValue)
-		return setTarget()
+		return setTarget(lul_device, lul_settings)
       </run>
     </action>
     <action>
@@ -16,7 +16,7 @@
       <name>SetLoadLevelTarget</name>
       <run>
 		luup.log("Set dim level for telldus device: " .. lul_settings.newLoadlevelTarget)
-		return setLoadLevelTarget()
+		return setLoadLevelTarget(lul_device, lul_settings)
       </run>
     </action>
     <action>
@@ -40,10 +40,60 @@
       <serviceId>urn:upnp-telldus-se:serviceId:TelldusApi1</serviceId>
       <name>SetPublicKey</name>
       <run>
-		luup.log("SetPublicKey telldus device: " .. newPublicKey)
-		for k, v in pairs(lul_settings) do
-			luup.log("Telldus lul setting (" .. tostring(k) .. ", " .. tostring(v) .. ")")
+		luup.log("SetPublicKey telldus device: " .. lul_settings.newPublicKey)
+		luup.variable_set("urn:upnp-telldus-se:serviceId:TelldusApi1","PublicKey", lul_settings.newPublicKey, lul_device)
+      </run>
+    </action>
+    <action>
+      <serviceId>urn:upnp-telldus-se:serviceId:TelldusApi1</serviceId>
+      <name>SetPrivateKey</name>
+      <run>
+		luup.log("SetPrivateKey telldus device: " .. lul_settings.newPrivateKey)
+		luup.variable_set("urn:upnp-telldus-se:serviceId:TelldusApi1","PrivateKey", lul_settings.newPrivateKey, lul_device)
+      </run>
+    </action>
+    <action>
+      <serviceId>urn:upnp-telldus-se:serviceId:TelldusApi1</serviceId>
+      <name>SetToken</name>
+      <run>
+		luup.log("SetToken telldus device: " .. lul_settings.newToken)
+		luup.variable_set("urn:upnp-telldus-se:serviceId:TelldusApi1","Token", lul_settings.newToken, lul_device)
+      </run>
+    </action>
+    <action>
+      <serviceId>urn:upnp-telldus-se:serviceId:TelldusApi1</serviceId>
+      <name>SetTokenSecret</name>
+      <run>
+		luup.log("SetTokenSecret telldus device: " .. lul_settings.newTokenSecret)
+		luup.variable_set("urn:upnp-telldus-se:serviceId:TelldusApi1","TokenSecret", lul_settings.newTokenSecret, lul_device)
+      </run>
+    </action>
+    <action>
+      <serviceId>urn:upnp-telldus-se:serviceId:TelldusApi1</serviceId>
+      <name>ValidateConnection</name>
+      <run>
+		luup.log("ValidateConnection")
+		if(connectionIsValid()) then
+			luup.variable_set("urn:upnp-telldus-se:serviceId:TelldusApi1","ConnectionValid", 0, lul_device)
+		else
+			luup.variable_set("urn:upnp-telldus-se:serviceId:TelldusApi1","ConnectionValid", 1, lul_device)
 		end
+      </run>
+    </action>
+    <action>
+      <serviceId>urn:upnp-telldus-se:serviceId:TelldusApi1</serviceId>
+      <name>RefreshDevicesAndSensors</name>
+      <run>
+		luup.log("RefreshDevicesAndSensors")
+		refreshSensorsAndDevices(lul_device)
+      </run>
+    </action>
+    <action>
+      <serviceId>urn:upnp-telldus-se:serviceId:TelldusApi1</serviceId>
+      <name>RemoveDevicesAndSensors</name>
+      <run>
+		luup.log("RemoveDevicesAndSensors")
+		removeSensorsAndDevices(lul_device)
       </run>
     </action>
   </actionList>  

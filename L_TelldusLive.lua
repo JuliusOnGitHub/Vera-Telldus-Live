@@ -8,19 +8,10 @@ local ltn12 = require("ltn12")
 local JSON = require("dkjson")
 local bit = require("bit")
 
---local public_key = ""
---local private_key = ""
---local token = ""
---local token_secret = ""
-
-local public_key = "FEHUVEW84RAFR5SP22RABURUPHAFRUNU"
-
-local private_key = "ZUXEVEGA9USTAZEWRETHAQUBUR69U6EF"
-
-local token = "8dd9b45e182e8ed141f93263301ad6be0527e295e"
-
-local token_secret = "938606c765fa040bcc45826f2d60bf7b"
-
+local public_key = ""
+local private_key = ""
+local token = ""
+local token_secret = ""
 
 local TELLDUS_SID = "urn:upnp-telldus-se:serviceId:TelldusApi1"
 local HADEVICE_SID = "urn:micasaverde-com:serviceId:HaDevice1"
@@ -110,7 +101,7 @@ local function request(url)
 	if(response_body) then
 		log("Response body : " .. response_body[1])
 	end
-	return response_body
+	return response_body, status
 end
 
 function getDevices()
@@ -251,27 +242,34 @@ function refreshCache()
 	log("Telldus timer exit.")
 end
 
-function lug_startup(lul_device)
-	log("Entering TelldusLive startup..")
-	
-	luup.variable_set(TELLDUS_SID,"PublicKey", public_key, lul_device)
-	luup.variable_set(TELLDUS_SID,"PrivateKey", private_key, lul_device)
-	luup.variable_set(TELLDUS_SID,"Token", token, lul_device)
-	luup.variable_set(TELLDUS_SID,"TokenSecret", token_secret, lul_device)
+function removeSensorsAndDevices(lul_device)
+	child_devices = luup.chdev.start(lul_device);
+	luup.chdev.sync(lul_device, child_devices)
+end
 
+function refreshSensorsAndDevices(lul_device)
+	local devices = getDevices()
+	local sensors = getSensors()
+	addAll(devices, sensors, lul_device);
+end
+
+function validKeys()
 	public_key = luup.variable_get(TELLDUS_SID,"PublicKey", lul_device)
 	private_key = luup.variable_get(TELLDUS_SID,"PrivateKey", lul_device)
 	token = luup.variable_get(TELLDUS_SID,"Token", lul_device)
 	token_secret = luup.variable_get(TELLDUS_SID,"TokenSecret", lul_device)
-	
+
 	if (public_key == nil or private_key == nil or token == nil or token_secret == nil) then
-        local msg = "Need telldus keys to run."
-		log(msg)
-        return
-    else
-		local devices = getDevices()
-		local sensors = getSensors()
-		addAll(devices, sensors, lul_device);
+		return false
+    end
+	return true
+end
+
+function lug_startup(lul_device)
+	log("Entering TelldusLive startup..")
+
+	if(validKeys()) then
+		refreshSensorsAndDevices(lul_device)
 		luup.call_timer("refreshCache", 1, REFRESH_INTERVAL, "")
 	end
 end
@@ -291,7 +289,7 @@ function setDimLevel(device_id, level)
 	return deviceCommand(device_id, "dim", "&level=" .. tostring(telldusLevel))
 end
 
-function setTarget()
+function setTarget(lul_device, lul_settings)
 	if(lul_settings.newTargetValue == "1") then
 		deviceCommand(luup.devices[lul_device].id, "turnOn")
 	else
@@ -303,7 +301,7 @@ function setTarget()
 	return true
 end
 
-function setLoadLevelTarget()
+function setLoadLevelTarget(lul_device, lul_settings)
 	if(lul_settings.newLoadlevelTarget == "0") then
 		deviceCommand(luup.devices[lul_device].id, "turnOff")
 	else
@@ -321,4 +319,11 @@ function setArmed(lul_device, lul_settings)
 		luup.variable_set(SECURITY_SID, ARMEDTRIPPED, "0")
 	end
 	return true
+end
+function connectionIsValid()
+	if(validKeys()) then
+		local body, status = request(api_url .. "/clients/list")
+		return string.match(status, "200")
+	end
+	return false
 end

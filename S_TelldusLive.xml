@@ -31,14 +31,22 @@
       <defaultValue></defaultValue>
       <shortCode></shortCode>
     </stateVariable>
+    <stateVariable>
+      <name>ValidConnection</name>
+      <sendEventsAttribute>yes</sendEventsAttribute>
+      <dataType>bool</dataType>
+      <defaultValue></defaultValue>
+      <shortCode></shortCode>
+    </stateVariable>
   </serviceStateTable>
   <actionList>
     <action>
       <name>SetPublicKey</name>
       <argumentList>
         <argument>
-          <name>publickey</name>
+          <name>newPublicKey</name>
           <direction>in</direction>
+		  <relatedStateVariable>PublicKey</relatedStateVariable>
         </argument>
       </argumentList>
     </action>
@@ -46,8 +54,9 @@
       <name>SetPrivateKey</name>
       <argumentList>
         <argument>
-          <name>privatekey</name>
+          <name>newPrivateKey</name>
           <direction>in</direction>
+		  <relatedStateVariable>PrivateKey</relatedStateVariable>
         </argument>
       </argumentList>
     </action>
@@ -55,8 +64,9 @@
       <name>SetToken</name>
       <argumentList>
         <argument>
-          <name>token</name>
+          <name>newToken</name>
           <direction>in</direction>
+		  <relatedStateVariable>Token</relatedStateVariable>
         </argument>
       </argumentList>
     </action>
@@ -64,9 +74,25 @@
       <name>SetTokenSecret</name>
       <argumentList>
         <argument>
-          <name>tokensecret</name>
+          <name>newTokenSecret</name>
           <direction>in</direction>
+		  <relatedStateVariable>TokenSecret</relatedStateVariable>
         </argument>
+      </argumentList>
+    </action>
+    <action>
+      <name>ValidateConnection</name>
+      <argumentList>
+      </argumentList>
+    </action>
+    <action>
+      <name>RefreshDevicesAndSensors</name>
+      <argumentList>
+      </argumentList>
+    </action>
+    <action>
+      <name>RemoveDevicesAndSensors</name>
+      <argumentList>
       </argumentList>
     </action>
   </actionList>

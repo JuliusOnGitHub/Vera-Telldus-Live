@@ -60,33 +60,31 @@
                     "Display": {
                         "Top": 20,
                         "Left": 50,
-                        "Width": 100,
+                        "Width": 110,
                         "Height": 20
                     }
                 },
                 {
                     "ControlType": "input",
-                    "Id": "newPublicKey",
+                    "ID": "newPublicKey",
                     "Display": {
                         "Service": "urn:upnp-telldus-se:serviceId:TelldusApi1",
                         "Variable": "PublicKey",
                         "Top": 20,
-                        "Left": 120,
-                        "Width": 320,
+                        "Left": 130,
+                        "Width": 340,
                         "Height": 20
                     }
                 },
                 {
                     "ControlType": "button",
-					"Label": {
-                        "lang_tag": "setPlulicKeyButtonLabel",
+                    "Label": {
+                        "lang_tag": "setLabel",
                         "text": "Set"
-                    },					
+                    },
                     "Display": {
-                        "Service": "urn:upnp-telldus-se:serviceId:TelldusApi1",
-                        "Variable": "PublicKey",
                         "Top": 20,
-                        "Left": 450,
+                        "Left": 480,
                         "Width": 100,
                         "Height": 20
                     },
@@ -95,9 +93,221 @@
                         "Action": "SetPublicKey",
                         "Parameters": [
                             {
-                                "Name": "newPublickey",
-                                "Id": "newPublickey"
+                                "Name": "newPublicKey",
+                                "ID": "newPublicKey"
                             }
+                        ]
+                    }
+                },
+                {
+                    "ControlType": "label",
+                    "Label": {
+                        "lang_tag": "device_settings_page",
+                        "text": "Private Key:"
+                    },
+                    "Display": {
+                        "Top": 50,
+                        "Left": 50,
+                        "Width": 110,
+                        "Height": 20
+                    }
+                },
+                {
+                    "ControlType": "input",
+                    "ID": "newPrivateKey",
+                    "Display": {
+                        "Service": "urn:upnp-telldus-se:serviceId:TelldusApi1",
+                        "Variable": "PrivateKey",
+                        "Top": 50,
+                        "Left": 130,
+                        "Width": 340,
+                        "Height": 20
+                    }
+                },
+                {
+                    "ControlType": "button",
+                    "Label": {
+                        "lang_tag": "setLabel",
+                        "text": "Set"
+                    },
+                    "Display": {
+                        "Top": 50,
+                        "Left": 480,
+                        "Width": 100,
+                        "Height": 20
+                    },
+                    "Command": {
+                        "Service": "urn:upnp-telldus-se:serviceId:TelldusApi1",
+                        "Action": "SetPrivateKey",
+                        "Parameters": [
+                            {
+                                "Name": "newPrivateKey",
+                                "ID": "newPrivateKey"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "ControlType": "label",
+                    "Label": {
+                        "lang_tag": "device_settings_page",
+                        "text": "Token:"
+                    },
+                    "Display": {
+                        "Top": 80,
+                        "Left": 50,
+                        "Width": 110,
+                        "Height": 20
+                    }
+                },
+                {
+                    "ControlType": "input",
+                    "ID": "newToken",
+                    "Display": {
+                        "Service": "urn:upnp-telldus-se:serviceId:TelldusApi1",
+                        "Variable": "Token",
+                        "Top": 80,
+                        "Left": 130,
+                        "Width": 340,
+                        "Height": 20
+                    }
+                },
+                {
+                    "ControlType": "button",
+                    "Label": {
+                        "lang_tag": "setLabel",
+                        "text": "Set"
+                    },
+                    "Display": {
+                        "Top": 80,
+                        "Left": 480,
+                        "Width": 100,
+                        "Height": 20
+                    },
+                    "Command": {
+                        "Service": "urn:upnp-telldus-se:serviceId:TelldusApi1",
+                        "Action": "SetToken",
+                        "Parameters": [
+                            {
+                                "Name": "newToken",
+                                "ID": "newToken"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "ControlType": "label",
+                    "Label": {
+                        "lang_tag": "device_settings_page",
+                        "text": "Token Secret:"
+                    },
+                    "Display": {
+                        "Top": 110,
+                        "Left": 50,
+                        "Width": 110,
+                        "Height": 20
+                    }
+                },
+                {
+                    "ControlType": "input",
+                    "ID": "newPublicKey",
+                    "Display": {
+                        "Service": "urn:upnp-telldus-se:serviceId:TelldusApi1",
+                        "Variable": "TokenSecret",
+                        "Top": 110,
+                        "Left": 130,
+                        "Width": 340,
+                        "Height": 20
+                    }
+                },
+                {
+                    "ControlType": "button",
+                    "Label": {
+                        "lang_tag": "setLabel",
+                        "text": "Set"
+                    },
+                    "Display": {
+                        "Top": 110,
+                        "Left": 480,
+                        "Width": 100,
+                        "Height": 20
+                    },
+                    "Command": {
+                        "Service": "urn:upnp-telldus-se:serviceId:TelldusApi1",
+                        "Action": "SetTokenSecret",
+                        "Parameters": [
+                            {
+                                "Name": "newTokenSecret",
+                                "ID": "newTokenSecret"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "ControlType": "button",
+                    "Label": {
+                        "lang_tag": "setLabel",
+                        "text": "Validate Connection"
+                    },
+                    "Display": {
+                        "Top": 140,
+                        "Left": 50,
+                        "Width": 200,
+                        "Height": 20
+                    },
+                    "Command": {
+                        "Service": "urn:upnp-telldus-se:serviceId:TelldusApi1",
+                        "Action": "ValidateConnection",
+                        "Parameters": [
+                        ]
+                    }
+                },
+                {
+                    "ControlType": "variable",
+                    "Display": {
+                        "Service": "urn:upnp-telldus-se:serviceId:TelldusApi1",
+                        "Variable": "ValidConnection",
+                        "Top": 140,
+                        "Left": 250,
+                        "Width": 110,
+                        "Height": 20
+                    }
+                },
+                {
+                    "ControlType": "button",
+                    "Label": {
+                        "lang_tag": "setLabel",
+                        "text": "Refresh devices and sensors from Telldus Live"
+                    },
+                    "Display": {
+                        "Top": 170,
+                        "Left": 50,
+                        "Width": 400,
+                        "Height": 20
+                    },
+                    "Command": {
+                        "Service": "urn:upnp-telldus-se:serviceId:TelldusApi1",
+                        "Action": "RefreshDevicesAndSensors",
+                        "Parameters": [
+                        ]
+                    }
+                },
+                {
+                    "ControlType": "button",
+                    "Label": {
+                        "lang_tag": "setLabel",
+                        "text": "Clear devices and sensors from Telldus Live"
+                    },
+                    "Display": {
+                        "Top": 200,
+                        "Left": 50,
+                        "Width": 400,
+                        "Height": 20
+                    },
+                    "Command": {
+                        "Service": "urn:upnp-telldus-se:serviceId:TelldusApi1",
+                        "Action": "RemoveDevicesAndSensors",
+                        "Parameters": [
                         ]
                     }
                 }
