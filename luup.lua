@@ -69,3 +69,7 @@ end
 function luup.call_timer()
     return true;
 end
+
+function luup.call_delay()
+	return true
+end

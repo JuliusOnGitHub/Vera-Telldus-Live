@@ -116,6 +116,7 @@ local function request(url)
 		log("Response body : " .. response_body[1])
 	end
 
+	local success = true
 	if(string.match(status, "200")) then
 		task("Connection with telldus successfull.", TASK_SUCCESS)
 		luup.variable_set(TELLDUS_SID, STATUSTEXT, "Connection with telldus successfull.",Telldus_device)
@@ -124,15 +125,16 @@ local function request(url)
 		task("Error when communicating with telldus server : " .. status, TASK_ERROR_PERM)
 		luup.variable_set(TELLDUS_SID, STATUSTEXT, "Error when communicating with telldus server : " .. status,Telldus_device)
 		luup.variable_set(TELLDUS_SID,VALIDCONNECTION, "0", Telldus_device)
+		success = false
 	end
 
-	return response_body, status
+	return response_body, status, success
 end
 
 function getDevices()
     local telldus_url= api_url .. "/devices/list?supportedMethods=951"
-	local response_body = request(telldus_url)
-	if(lastConnectionWasValid()) then
+	local response_body, status, success = request(telldus_url)
+	if(success) then
 		return JSON.decode(response_body[1])
 	end
 	return { device = {} }
@@ -140,8 +142,8 @@ end
 
 function getSensors()
     local telldus_url= api_url .. "/sensors/list?includeIgnored=0&includeValues=1"
-	local response_body = request(telldus_url)
-	if(lastConnectionWasValid()) then
+	local response_body, status, success = request(telldus_url)
+	if(success) then
 		return JSON.decode(response_body[1])
 	end
 	return { sensor = {} }
@@ -241,6 +243,8 @@ end
 
 function addAll(devices, sensors, lul_device)
 	child_devices = luup.chdev.start(lul_device);
+	local counter = 0
+	local added = 0
 	for k, d in pairs(devices.device) do
 		log("Device : " .. d.id .. " named " .. d.name .. " supporting methods : " .. tostring(d.methods))
 		local deviceinfo = getDeviceInfo(d.id)
@@ -248,31 +252,42 @@ function addAll(devices, sensors, lul_device)
 		if(string.match(deviceinfo.model, "magnet")) then
 			log("Device " .. d.name .. " is a magnet")
 			luup.chdev.append(lul_device, child_devices, d.id, d.name, "", "D_DoorSensor1.xml", "", "", false)
+			added = added + 1
 		elseif (string.match(deviceinfo.model, "pir")) then
 			log("Device " .. d.name .. " is a motion sensor")
 			luup.chdev.append(lul_device, child_devices, d.id, d.name, "", "D_MotionSensor1.xml", "", "", false)
+			added = added + 1
 		else
 			log("Device " .. d.name .. " is dimmer or switch")
 			if(bit.band(d.methods, TELLSTICK_DIM) > 0) then
 				luup.chdev.append(lul_device, child_devices, d.id, d.name, "", "D_DimmableLight1.xml", "", "", false)
+				added = added + 1
 			else
 				luup.chdev.append(lul_device, child_devices, d.id, d.name, "", "D_BinaryLight1.xml", "", "", false)
+				added = added + 1
 			end
 		end
-
+		counter = counter + 1
 	end
+	log("Found " .. counter .. " and added " .. added .. " devices.")
 
+	counter = 0
+	added = 0
 	for k, s in pairs(sensors.sensor) do
 		if(s.name) then
 			log("Sensor : " .. s.id .. " named " .. s.name)
 			if (s.temp) then
 				luup.chdev.append(lul_device, child_devices, s.id .. "_temp", s.name .. " temperature", "", "D_TemperatureSensor1.xml", "", "", false)
+				added = added + 1
 			end
 			if (s.humidity) then
 				luup.chdev.append(lul_device, child_devices, s.id .. "_humidity", s.name .. " humidity", "", "D_HumiditySensor1.xml", "", false)
+				added = added + 1
 			end
 		end
+		counter = counter + 1
 	end
+	log("Found " .. counter .. " and added " .. added .. " sensors.")
 	luup.chdev.sync(lul_device, child_devices)
 	updateSensors(sensors)
 	updateDevices(devices)
@@ -299,7 +314,7 @@ end
 
 function refreshSensorsAndDevices(lul_device)
 	task("Refreshing devices and sensors...", TASK_BUSY)
-	if(lastConnectionWasValid()) then
+	if(connectionIsValid()) then
 		local devices = getDevices()
 		local sensors = getSensors()
 		addAll(devices, sensors, lul_device);
@@ -417,10 +432,6 @@ function testConnection()
 	else
 		task("Could not connect, please check keys and that Telldus Live is reachable.", TASK_ERROR)
 	end
-end
-
-function lastConnectionWasValid()
-	return luup.variable_get(TELLDUS_SID,VALIDCONNECTION, lul_device) == "1"
 end
 
 function connectionIsValid()
