@@ -51,7 +51,6 @@
       <dataType>i4</dataType>
       <defaultValue>30</defaultValue>
     </stateVariable>
-    <stateVariable>
   </serviceStateTable>
   <actionList>
     <action>

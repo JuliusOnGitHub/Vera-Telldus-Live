@@ -40,6 +40,7 @@ local CURRENTTEMPERATURE = "CurrentTemperature"
 local LOADLEVELSTATUS = "LoadLevelStatus"
 local VALIDCONNECTION = "ValidConnection"
 local STATUSTEXT = "StatusText"
+local REFRESHINTERVAL = "RefreshInterval"
 
 local PRIVATE_KEY = "PrivateKey"
 local PUBLIC_KEY = "PublicKey"
@@ -285,7 +286,7 @@ end
 function refreshTrigger()
 	log("Telldus timer called...")
 	refresh()
-	luup.call_timer("refreshTrigger", 1, toNumber(luup.variable_get(TELLDUS_SID,"RefreshInterval", Telldus_device)), "")
+	luup.call_timer("refreshTrigger", 1, luup.variable_get(TELLDUS_SID, REFRESHINTERVAL, Telldus_device), "")
 	log("Telldus timer exit.")
 end
 
@@ -322,6 +323,10 @@ function areKeysValid()
 end
 
 function init()
+	if(luup.variable_get(TELLDUS_SID, REFRESHINTERVAL, Telldus_device) == nil) then
+		luup.variable_set(TELLDUS_SID, REFRESHINTERVAL, 30, Telldus_device)
+	end
+
 	if(areKeysValid()) then
 		return
 	end
@@ -331,27 +336,24 @@ function init()
 	end
 
 	if(luup.variable_get(TELLDUS_SID, PRIVATE_KEY, Telldus_device) == nil) then
-		luup.variable_set(TELLDUS_SID,"PrivateKey", "", Telldus_device)
+		luup.variable_set(TELLDUS_SID, PUBLIC_KEY, "", Telldus_device)
 	end
 
 	if(luup.variable_get(TELLDUS_SID, TOKEN, Telldus_device) == nil) then
-		luup.variable_set(TELLDUS_SID,"Token", "", Telldus_device)
+		luup.variable_set(TELLDUS_SID, TOKEN, "", Telldus_device)
 	end
 
 	if(luup.variable_get(TELLDUS_SID, TOKEN_SECRET, Telldus_device) == nil) then
-		luup.variable_set(TELLDUS_SID,"TokenSecret", "", Telldus_device)
+		luup.variable_set(TELLDUS_SID, TOKEN_SECRET, "", Telldus_device)
 	end
 
-	if(luup.variable_get(TELLDUS_SID, "RefreshInterval", Telldus_device) == nil) then
-		luup.variable_set(TELLDUS_SID, "RefreshInterval", 30, Telldus_device)
-	end
 end
 
 function lug_startup(lul_device)
 	log("Entering TelldusLive startup..")
 	Telldus_device = lul_device
-	init()
-	luup.call_timer("refreshTrigger", 1, toNumber(luup.variable_get(TELLDUS_SID,"RefreshInterval", Telldus_device)), "")
+	init(lul_device)
+	luup.call_timer("refreshTrigger", 1, luup.variable_get(TELLDUS_SID, REFRESHINTERVAL, Telldus_device), "")
 	if(not areKeysValid()) then
 		task("You need to configure the Telldus keys", TASK_ERROR_PERM)
 		return false
