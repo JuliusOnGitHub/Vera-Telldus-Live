@@ -73,7 +73,8 @@
                         "Top": 20,
                         "Left": 130,
                         "Width": 340,
-                        "Height": 20
+                        "Height": 20,
+						"ID": "newPublicKey"
                     }
                 },
                 {
@@ -121,7 +122,8 @@
                         "Top": 50,
                         "Left": 130,
                         "Width": 340,
-                        "Height": 20
+                        "Height": 20,
+						"ID": "newPrivateKey"
                     }
                 },
                 {
@@ -169,7 +171,8 @@
                         "Top": 80,
                         "Left": 130,
                         "Width": 340,
-                        "Height": 20
+                        "Height": 20,
+						"ID": "newToken"
                     }
                 },
                 {
@@ -210,14 +213,15 @@
                 },
                 {
                     "ControlType": "input",
-                    "ID": "newPublicKey",
+                    "ID": "newTokenSecret",
                     "Display": {
                         "Service": "urn:upnp-telldus-se:serviceId:TelldusApi1",
                         "Variable": "TokenSecret",
                         "Top": 110,
                         "Left": 130,
                         "Width": 340,
-                        "Height": 20
+                        "Height": 20,
+						"ID": "newTokenSecret"
                     }
                 },
                 {
@@ -277,12 +281,12 @@
                     "ControlType": "button",
                     "Label": {
                         "lang_tag": "setLabel",
-                        "text": "Refresh devices and sensors from Telldus Live"
+                        "text": "Refresh devices"
                     },
                     "Display": {
                         "Top": 170,
                         "Left": 50,
-                        "Width": 400,
+                        "Width": 200,
                         "Height": 20
                     },
                     "Command": {
@@ -296,12 +300,12 @@
                     "ControlType": "button",
                     "Label": {
                         "lang_tag": "setLabel",
-                        "text": "Clear devices and sensors from Telldus Live"
+                        "text": "Clear devices"
                     },
                     "Display": {
                         "Top": 200,
                         "Left": 50,
-                        "Width": 400,
+                        "Width": 200,
                         "Height": 20
                     },
                     "Command": {

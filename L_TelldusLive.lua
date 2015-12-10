@@ -229,7 +229,6 @@ function addAll(devices, sensors, lul_device)
 		end
 	end
 	luup.chdev.sync(lul_device, child_devices)
-	Telldus_device = lul_device
 	updateSensors(sensors)
 	updateDevices(devices)
 end
@@ -254,10 +253,10 @@ function refreshSensorsAndDevices(lul_device)
 end
 
 function validKeys()
-	public_key = luup.variable_get(TELLDUS_SID,"PublicKey", lul_device)
-	private_key = luup.variable_get(TELLDUS_SID,"PrivateKey", lul_device)
-	token = luup.variable_get(TELLDUS_SID,"Token", lul_device)
-	token_secret = luup.variable_get(TELLDUS_SID,"TokenSecret", lul_device)
+	public_key = luup.variable_get(TELLDUS_SID,"PublicKey", Telldus_device)
+	private_key = luup.variable_get(TELLDUS_SID,"PrivateKey", Telldus_device)
+	token = luup.variable_get(TELLDUS_SID,"Token", Telldus_device)
+	token_secret = luup.variable_get(TELLDUS_SID,"TokenSecret", Telldus_device)
 
 	if (public_key == nil or private_key == nil or token == nil or token_secret == nil) then
 		return false
@@ -267,8 +266,9 @@ end
 
 function lug_startup(lul_device)
 	log("Entering TelldusLive startup..")
+	Telldus_device = lul_device
 
-	if(validKeys()) then
+	if(validKeys(lul_device)) then
 		refreshSensorsAndDevices(lul_device)
 		luup.call_timer("refreshCache", 1, REFRESH_INTERVAL, "")
 	end

@@ -74,18 +74,10 @@
       <run>
 		luup.log("ValidateConnection")
 		if(connectionIsValid()) then
-			luup.variable_set("urn:upnp-telldus-se:serviceId:TelldusApi1","ConnectionValid", 0, lul_device)
+			luup.variable_set("urn:upnp-telldus-se:serviceId:TelldusApi1","ValidConnection", "1", lul_device)
 		else
-			luup.variable_set("urn:upnp-telldus-se:serviceId:TelldusApi1","ConnectionValid", 1, lul_device)
+			luup.variable_set("urn:upnp-telldus-se:serviceId:TelldusApi1","ValidConnection", "0", lul_device)
 		end
-      </run>
-    </action>
-    <action>
-      <serviceId>urn:upnp-telldus-se:serviceId:TelldusApi1</serviceId>
-      <name>RefreshDevicesAndSensors</name>
-      <run>
-		luup.log("RefreshDevicesAndSensors")
-		refreshSensorsAndDevices(lul_device)
       </run>
     </action>
     <action>
@@ -94,6 +86,14 @@
       <run>
 		luup.log("RemoveDevicesAndSensors")
 		removeSensorsAndDevices(lul_device)
+      </run>
+    </action>
+    <action>
+      <serviceId>urn:upnp-telldus-se:serviceId:TelldusApi1</serviceId>
+      <name>RefreshDevicesAndSensors</name>
+      <run>
+		luup.log("RefreshDevicesAndSensors")
+		refreshSensorsAndDevices(lul_device)
       </run>
     </action>
   </actionList>  
