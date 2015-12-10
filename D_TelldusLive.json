@@ -270,10 +270,10 @@
                     "ControlType": "variable",
                     "Display": {
                         "Service": "urn:upnp-telldus-se:serviceId:TelldusApi1",
-                        "Variable": "ValidConnection",
+                        "Variable": "StatusText",
                         "Top": 140,
                         "Left": 250,
-                        "Width": 110,
+                        "Width": 410,
                         "Height": 20
                     }
                 },

@@ -39,6 +39,7 @@ local CURRENTLEVEL = "CurrentLevel"
 local CURRENTTEMPERATURE = "CurrentTemperature"
 local LOADLEVELSTATUS = "LoadLevelStatus"
 local VALIDCONNECTION = "ValidConnection"
+local STATUSTEXT = "StatusText"
 
 local PRIVATE_KEY = "PrivateKey"
 local PUBLIC_KEY = "PublicKey"
@@ -116,10 +117,12 @@ local function request(url)
 
 	if(string.match(status, "200")) then
 		task("Connection with telldus successfull.", TASK_SUCCESS)
-		luup.variable_set(TELLDUS_SID,VALIDCONNECTION, "1", lul_device)
+		luup.variable_set(TELLDUS_SID, STATUSTEXT, "Connection with telldus successfull.",Telldus_device)
+		luup.variable_set(TELLDUS_SID,VALIDCONNECTION, "1", Telldus_device)
 	else
 		task("Error when communicating with telldus server : " .. status, TASK_ERROR_PERM)
-		luup.variable_set(TELLDUS_SID,VALIDCONNECTION, "0", lul_device)
+		luup.variable_set(TELLDUS_SID, STATUSTEXT, "Error when communicating with telldus server : " .. status,Telldus_device)
+		luup.variable_set(TELLDUS_SID,VALIDCONNECTION, "0", Telldus_device)
 	end
 
 	return response_body, status

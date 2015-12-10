@@ -39,6 +39,13 @@
       <shortCode></shortCode>
     </stateVariable>
     <stateVariable>
+      <name>StatusText</name>
+      <sendEventsAttribute>yes</sendEventsAttribute>
+      <dataType>string</dataType>
+      <defaultValue></defaultValue>
+      <shortCode></shortCode>
+    </stateVariable>
+    <stateVariable>
       <name>RefreshInterval</name>
       <sendEventsAttribute>no</sendEventsAttribute>
       <dataType>i4</dataType>
