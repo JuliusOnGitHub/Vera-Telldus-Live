@@ -1,0 +1,104 @@
+<?xml version="1.0"?>
+<implementation>
+  <files>L_TelldusLive.lua</files>
+  <startup>lug_startup</startup>
+  <actionList>
+    <action>
+      <serviceId>urn:upnp-org:serviceId:SwitchPower1</serviceId>
+      <name>SetTarget</name>
+      <run>
+		luup.log("SetTarget for telldus device: " .. lul_settings.newTargetValue)
+		return setTarget(lul_device, lul_settings)
+      </run>
+    </action>
+    <action>
+      <serviceId>urn:upnp-org:serviceId:Dimming1</serviceId>
+      <name>SetLoadLevelTarget</name>
+      <run>
+		luup.log("Set dim level for telldus device: " .. lul_settings.newLoadlevelTarget)
+		return setLoadLevelTarget(lul_device, lul_settings)
+      </run>
+    </action>
+    <action>
+      <serviceId>urn:micasaverde-com:serviceId:SecuritySensor1</serviceId>
+      <name>SetArmed</name>
+      <run>
+		luup.log("Set armed for telldus device: " .. lul_device .. " with arm value : " ..lul_settings.newArmedValue)
+		return setArmed(lul_device, lul_settings)
+      </run>
+    </action>
+	<action>
+      <serviceId>urn:micasaverde-com:serviceId:HaDevice1</serviceId>
+      <name>Poll</name>
+      <run>
+        task("Telldus sensor sync start", TASK_BUSY)
+        -- Force refreshCache to get called in a Timer
+        luup.call_timer("refreshCache", 1, "1", "")
+      </run>
+	</action>	
+    <action>
+      <serviceId>urn:upnp-telldus-se:serviceId:TelldusApi1</serviceId>
+      <name>SetPublicKey</name>
+      <run>
+		luup.log("SetPublicKey telldus device: " .. lul_settings.newPublicKey)
+		luup.variable_set("urn:upnp-telldus-se:serviceId:TelldusApi1","PublicKey", lul_settings.newPublicKey, lul_device)
+      </run>
+    </action>
+    <action>
+      <serviceId>urn:upnp-telldus-se:serviceId:TelldusApi1</serviceId>
+      <name>SetPrivateKey</name>
+      <run>
+		luup.log("SetPrivateKey telldus device: " .. lul_settings.newPrivateKey)
+		luup.variable_set("urn:upnp-telldus-se:serviceId:TelldusApi1","PrivateKey", lul_settings.newPrivateKey, lul_device)
+      </run>
+    </action>
+    <action>
+      <serviceId>urn:upnp-telldus-se:serviceId:TelldusApi1</serviceId>
+      <name>SetToken</name>
+      <run>
+		luup.log("SetToken telldus device: " .. lul_settings.newToken)
+		luup.variable_set("urn:upnp-telldus-se:serviceId:TelldusApi1","Token", lul_settings.newToken, lul_device)
+      </run>
+    </action>
+    <action>
+      <serviceId>urn:upnp-telldus-se:serviceId:TelldusApi1</serviceId>
+      <name>SetTokenSecret</name>
+      <run>
+		luup.log("SetTokenSecret telldus device: " .. lul_settings.newTokenSecret)
+		luup.variable_set("urn:upnp-telldus-se:serviceId:TelldusApi1","TokenSecret", lul_settings.newTokenSecret, lul_device)
+      </run>
+    </action>
+    <action>
+      <serviceId>urn:upnp-telldus-se:serviceId:TelldusApi1</serviceId>
+      <name>SetRefreshInterval</name>
+      <run>
+		luup.log("SetRefreshInterval to : " .. lul_settings.newRefreshInterval)
+		luup.variable_set("urn:upnp-telldus-se:serviceId:TelldusApi1","RefreshInterval", lul_settings.newRefreshInterval, lul_device)
+      </run>
+    </action>
+    <action>
+      <serviceId>urn:upnp-telldus-se:serviceId:TelldusApi1</serviceId>
+      <name>ValidateConnection</name>
+      <run>
+		luup.log("ValidateConnection")
+		testConnection()
+      </run>
+    </action>
+    <action>
+      <serviceId>urn:upnp-telldus-se:serviceId:TelldusApi1</serviceId>
+      <name>RemoveDevicesAndSensors</name>
+      <run>
+		luup.log("RemoveDevicesAndSensors")
+		removeSensorsAndDevices(lul_device)
+      </run>
+    </action>
+    <action>
+      <serviceId>urn:upnp-telldus-se:serviceId:TelldusApi1</serviceId>
+      <name>RefreshDevicesAndSensors</name>
+      <run>
+		luup.log("RefreshDevicesAndSensors")
+		refreshSensorsAndDevices(lul_device)
+      </run>
+    </action>
+  </actionList>  
+</implementation>

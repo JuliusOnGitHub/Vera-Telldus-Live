@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<root xmlns="urn:schemas-upnp-org:device-1-0">
+  <specVersion>
+    <major>1</major>
+    <minor>0</minor>
+  </specVersion>
+  <device>
+    <deviceType>urn:schemas-telldus-se:device:telldusapi:1</deviceType>
+	<staticJson>D_TelldusLive.json</staticJson>
+    <friendlyName>Control you telldus live devices</friendlyName>
+    <manufacturer>Julius</manufacturer>
+    <manufacturerURL>https://github.com/JuliusOnGitHub/VeraTelldusLive</manufacturerURL>
+    <modelDescription>Telldus live api interface</modelDescription>
+    <modelName>TelldusLive</modelName>
+    <modelNumber>1.0</modelNumber>
+	<protocol>raw</protocol>
+	<handleChildren>1</handleChildren>
+    <serviceList>
+		<service>
+			<serviceType>urn:telldus-se:service:TelldusApi:1</serviceType>
+			<serviceId>urn:upnp-telldus-se:serviceId:TelldusApi1</serviceId>
+			<SCPDURL>S_TelldusLive.xml</SCPDURL>
+		</service>	
+		<service>
+			<serviceType>urn:schemas-micasaverde-com:service:HaDevice:1</serviceType>
+			<serviceId>urn:micasaverde-com:serviceId:HaDevice1</serviceId>
+			<SCPDURL>S_HaDevice1.xml</SCPDURL>
+		</service>    
+	</serviceList>
+    <implementationList>
+      <implementationFile>I_TelldusLive.xml</implementationFile>
+    </implementationList>
+    <presentationURL>/tvdevicepres.html</presentationURL>
+  </device>
+</root>
