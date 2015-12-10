@@ -36,7 +36,7 @@ function luup.variable_get(serviceId,varName,deviceId)
     key = serviceId..varName..deviceId
     value = luupvars[key]
     if(value == nil) then value = 0 end
-    -- print("variable get: "..key.. " is : "..value)
+    print("variable get: "..key.. " is : "..value)
     return value
 end
 

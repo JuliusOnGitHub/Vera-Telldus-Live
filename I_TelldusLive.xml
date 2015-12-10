@@ -70,14 +70,18 @@
     </action>
     <action>
       <serviceId>urn:upnp-telldus-se:serviceId:TelldusApi1</serviceId>
+      <name>SetRefreshInterval</name>
+      <run>
+		luup.log("SetRefreshInterval to : " .. lul_settings.newRefreshInterval)
+		luup.variable_set("urn:upnp-telldus-se:serviceId:TelldusApi1","RefreshInterval", lul_settings.newRefreshInterval, lul_device)
+      </run>
+    </action>
+    <action>
+      <serviceId>urn:upnp-telldus-se:serviceId:TelldusApi1</serviceId>
       <name>ValidateConnection</name>
       <run>
 		luup.log("ValidateConnection")
-		if(connectionIsValid()) then
-			luup.variable_set("urn:upnp-telldus-se:serviceId:TelldusApi1","ValidConnection", "1", lul_device)
-		else
-			luup.variable_set("urn:upnp-telldus-se:serviceId:TelldusApi1","ValidConnection", "0", lul_device)
-		end
+		testConnection()
       </run>
     </action>
     <action>

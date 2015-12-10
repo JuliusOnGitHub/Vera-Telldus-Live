@@ -34,10 +34,17 @@
     <stateVariable>
       <name>ValidConnection</name>
       <sendEventsAttribute>yes</sendEventsAttribute>
-      <dataType>bool</dataType>
+      <dataType>boolean</dataType>
       <defaultValue></defaultValue>
       <shortCode></shortCode>
     </stateVariable>
+    <stateVariable>
+      <name>RefreshInterval</name>
+      <sendEventsAttribute>no</sendEventsAttribute>
+      <dataType>i4</dataType>
+      <defaultValue>30</defaultValue>
+    </stateVariable>
+    <stateVariable>
   </serviceStateTable>
   <actionList>
     <action>
@@ -77,6 +84,16 @@
           <name>newTokenSecret</name>
           <direction>in</direction>
 		  <relatedStateVariable>TokenSecret</relatedStateVariable>
+        </argument>
+      </argumentList>
+    </action>
+    <action>
+      <name>SetRefreshInterval</name>
+      <argumentList>
+        <argument>
+          <name>newRefreshInterval</name>
+          <direction>in</direction>
+		  <relatedStateVariable>RefreshInterval</relatedStateVariable>
         </argument>
       </argumentList>
     </action>
