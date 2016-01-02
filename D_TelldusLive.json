@@ -314,6 +314,17 @@
                         "Parameters": [
                         ]
                     }
+                },
+                {
+                    "ControlType": "variable",
+                    "Display": {
+                        "Service": "urn:upnp-telldus-se:serviceId:TelldusApi1",
+                        "Variable": "LastUpdated",
+                        "Top": 230,
+                        "Left": 50,
+                        "Width": 410,
+                        "Height": 20
+                    }
                 }
             ]
         },

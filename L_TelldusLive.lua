@@ -41,6 +41,7 @@ local LOADLEVELSTATUS = "LoadLevelStatus"
 local VALIDCONNECTION = "ValidConnection"
 local STATUSTEXT = "StatusText"
 local REFRESHINTERVAL = "RefreshInterval"
+local LASTUPDATED = "LastUpdated"
 
 local PRIVATE_KEY = "PrivateKey"
 local PUBLIC_KEY = "PublicKey"
@@ -152,18 +153,29 @@ end
 local function updateSensors(sensors)
 	for k, s in pairs(sensors.sensor) do
 		if(s.name) then
+			local timeLimit = os.time() - (60 * 60 * 3)
 			if (s.temp) then
 				local device, key = findChild(Telldus_device, s.id .. "_temp")
 				if(device) then
-					log("Setting sensor " .. s.name .. " temperature to " .. s.temp)
-					luup.variable_set(TEMP_SID, CURRENTTEMPERATURE, s.temp, key)
+					if(s.lastUpdated > timeLimit) then -- do not accept old sensor values
+						log("Setting sensor " .. s.name .. " temperature to " .. s.temp)
+						luup.variable_set(TEMP_SID, CURRENTTEMPERATURE, s.temp, key)
+					else
+						log("Sensor data to old for " .. s.name .. " with timestamp : " .. s.lastUpdated)
+						luup.set_failure(0, device)
+					end
 				end
 			end
 			if (s.humidity) then
 				local device, key = findChild(Telldus_device, s.id .. "_humidity")
 				if(device) then
-					log("Setting sensor " .. s.name .. " humidity to " .. s.temp)
-					luup.variable_set(HUM_SID, CURRENTLEVEL, s.humidity, key)
+					if(s.lastUpdated > timeLimit) then -- do not accept old sensor values
+						log("Setting sensor " .. s.name .. " humidity to " .. s.humidity)
+						luup.variable_set(HUM_SID, CURRENTLEVEL, s.humidity, key)
+					else
+						log("Sensor data to old for " .. s.name .. " with timestamp : " .. s.lastUpdated)
+						luup.set_failure(0, device)
+					end
 				end
 			end
 		end
@@ -193,7 +205,7 @@ function updateSecurityDevice(key, state, d)
 	if(armed == "1") then
 		local armedTripped = luup.variable_get(SECURITY_SID, ARMEDTRIPPED, key)
 		if(armedTripped == "0") then
-			if(activityIn(tstamp, os.time(), d.id)) then
+			if(activityIn(tstamp + 60, os.time(), d.id)) then
 				luup.variable_set(SECURITY_SID, ARMEDTRIPPED, "1", key)
 				luup.variable_set(SECURITY_SID, TRIPPED, "1", key)
 			end
@@ -240,7 +252,6 @@ local function getDeviceInfo(id)
 	return JSON.decode(response_body[1])
 end
 
-
 function addAll(devices, sensors, lul_device)
 	child_devices = luup.chdev.start(lul_device);
 	local counter = 0
@@ -272,22 +283,23 @@ function addAll(devices, sensors, lul_device)
 	log("Found " .. counter .. " and added " .. added .. " devices.")
 
 	counter = 0
-	added = 0
+	local tempSensorCount = 0
+	local humSensorsCount = 0
 	for k, s in pairs(sensors.sensor) do
 		if(s.name) then
 			log("Sensor : " .. s.id .. " named " .. s.name)
 			if (s.temp) then
 				luup.chdev.append(lul_device, child_devices, s.id .. "_temp", s.name .. " temperature", "", "D_TemperatureSensor1.xml", "", "", false)
-				added = added + 1
+				tempSensorCount = tempSensorCount + 1
 			end
 			if (s.humidity) then
-				luup.chdev.append(lul_device, child_devices, s.id .. "_humidity", s.name .. " humidity", "", "D_HumiditySensor1.xml", "", false)
-				added = added + 1
+				luup.chdev.append(lul_device, child_devices, s.id .. "_humidity", s.name .. " humidity", "", "D_HumiditySensor1.xml", "", "", false)
+				humSensorsCount = humSensorsCount + 1
 			end
 		end
 		counter = counter + 1
 	end
-	log("Found " .. counter .. " and added " .. added .. " sensors.")
+	log("Found " .. counter .. " sensors. Added " .. tempSensorCount .. " temperature sensors. Added " .. humSensorsCount .. " humidity sensors.")
 	luup.chdev.sync(lul_device, child_devices)
 	updateSensors(sensors)
 	updateDevices(devices)
@@ -296,6 +308,9 @@ end
 function refresh()
 	updateSensors(getSensors())
 	updateDevices(getDevices())
+	local ta = os.date("*t")
+	local s = string.format("%d-%02d-%02d %02d:%02d:%02d", ta.year, ta.month, ta.day, ta.hour, ta.min, ta.sec)
+	luup.variable_set(TELLDUS_SID, LASTUPDATED, s, Telldus_device)
 end
 
 function refreshTrigger()
@@ -362,13 +377,15 @@ function init()
 		luup.variable_set(TELLDUS_SID, TOKEN_SECRET, "", Telldus_device)
 	end
 
+
+
 end
 
 function lug_startup(lul_device)
 	log("Entering TelldusLive startup..")
 	Telldus_device = lul_device
 	init(lul_device)
-	luup.call_timer("refreshTrigger", 1, luup.variable_get(TELLDUS_SID, REFRESHINTERVAL, Telldus_device), "")
+	--luup.call_timer("refreshTrigger", 1, luup.variable_get(TELLDUS_SID, REFRESHINTERVAL, Telldus_device), "")
 	if(not areKeysValid()) then
 		task("You need to configure the Telldus keys", TASK_ERROR_PERM)
 		return false
@@ -432,6 +449,10 @@ function testConnection()
 	else
 		task("Could not connect, please check keys and that Telldus Live is reachable.", TASK_ERROR)
 	end
+end
+
+function lastConnectionWasValid()
+	return luup.variable_get(TELLDUS_SID,VALIDCONNECTION, lul_device) == "1"
 end
 
 function connectionIsValid()
