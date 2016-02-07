@@ -226,14 +226,11 @@ function updateSecurityDevice(key, state, d)
 	if(armed == "1") then
 		log("Device armed...")
 		local armedTripped = luup.variable_get(SECURITY_SID, ARMEDTRIPPED, key)
-		if(armedTripped == "0") then
-			log("and not tripped....checking state")
-			if(activityIn(tstamp, os.time(), d.id)) then
-				luup.variable_set(SECURITY_SID, ARMEDTRIPPED, "1", key)
-				luup.variable_set(SECURITY_SID, TRIPPED, "1", key)
-			end
-		else
-			log("and allready tripped")
+		log("and not tripped....checking state")
+		local  interval = luup.variable_get(TELLDUS_SID, REFRESHINTERVAL, Telldus_device)
+		if(activityIn(os.time() - interval - 10, os.time(), d.id)) then
+			luup.variable_set(SECURITY_SID, ARMEDTRIPPED, "1", key)
+			luup.variable_set(SECURITY_SID, TRIPPED, "1", key)
 		end
 	else
 		luup.variable_set(SECURITY_SID, TRIPPED, state, key)
@@ -342,7 +339,7 @@ end
 
 function refreshTrigger()
 	log("Telldus timer called...")
-	luup.call_delay("refreshTrigger", 120)
+	luup.call_delay("refreshTrigger", luup.variable_get(TELLDUS_SID, REFRESHINTERVAL, Telldus_device))
 	refresh()
 	log("Telldus timer exit.")
 end
@@ -381,7 +378,7 @@ end
 
 function init()
 	if(luup.variable_get(TELLDUS_SID, REFRESHINTERVAL, Telldus_device) == nil) then
-		luup.variable_set(TELLDUS_SID, REFRESHINTERVAL, 30, Telldus_device)
+		luup.variable_set(TELLDUS_SID, REFRESHINTERVAL, 60, Telldus_device)
 	end
 
 	if(areKeysValid()) then
