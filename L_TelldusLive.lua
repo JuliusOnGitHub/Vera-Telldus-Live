@@ -41,6 +41,7 @@ local LOADLEVELSTATUS = "LoadLevelStatus"
 local VALIDCONNECTION = "ValidConnection"
 local STATUSTEXT = "StatusText"
 local REFRESHINTERVAL = "RefreshInterval"
+local LASTUPDATED = "LastUpdated"
 
 local PRIVATE_KEY = "PrivateKey"
 local PUBLIC_KEY = "PublicKey"
@@ -111,12 +112,18 @@ local function request(url)
 		headers = getHeaders(url);
 		sink = ltn12.sink.table(response_body);
 	}
+
+	local success = true
+
 	log("Response code status : " .. status)
-	if(response_body) then
+	if(response_body and JSON.decode(response_body[1]) ~= nil) then
 		log("Response body : " .. response_body[1])
+	else
+		log("No response object from server")
+		success = false
 	end
 
-	if(string.match(status, "200")) then
+	if(success == true and string.match(status, "200")) then
 		task("Connection with telldus successfull.", TASK_SUCCESS)
 		luup.variable_set(TELLDUS_SID, STATUSTEXT, "Connection with telldus successfull.",Telldus_device)
 		luup.variable_set(TELLDUS_SID,VALIDCONNECTION, "1", Telldus_device)
@@ -124,44 +131,62 @@ local function request(url)
 		task("Error when communicating with telldus server : " .. status, TASK_ERROR_PERM)
 		luup.variable_set(TELLDUS_SID, STATUSTEXT, "Error when communicating with telldus server : " .. status,Telldus_device)
 		luup.variable_set(TELLDUS_SID,VALIDCONNECTION, "0", Telldus_device)
+		success = false
 	end
 
-	return response_body, status
+	return response_body, status, success
 end
 
 function getDevices()
     local telldus_url= api_url .. "/devices/list?supportedMethods=951"
-	local response_body = request(telldus_url)
-	if(lastConnectionWasValid()) then
-		return JSON.decode(response_body[1])
+	local response_body, status, success = request(telldus_url)
+	if(success) then
+		local devices = JSON.decode(response_body[1])
+		if(devices ~= nil) then
+			return devices, true
+		end
 	end
-	return { device = {} }
+	return { device = {} }, false
 end
 
 function getSensors()
     local telldus_url= api_url .. "/sensors/list?includeIgnored=0&includeValues=1"
-	local response_body = request(telldus_url)
-	if(lastConnectionWasValid()) then
-		return JSON.decode(response_body[1])
+	local response_body, status, success = request(telldus_url)
+	if(success) then
+		local sensors = JSON.decode(response_body[1])
+		if (sensors ~= nil) then
+			return sensors, true
+		end
 	end
-	return { sensor = {} }
+	return { sensor = {} }, false
 end
 
 local function updateSensors(sensors)
 	for k, s in pairs(sensors.sensor) do
 		if(s.name) then
+			local timeLimit = os.time() - (60 * 60 * 3)
 			if (s.temp) then
 				local device, key = findChild(Telldus_device, s.id .. "_temp")
 				if(device) then
-					log("Setting sensor " .. s.name .. " temperature to " .. s.temp)
-					luup.variable_set(TEMP_SID, CURRENTTEMPERATURE, s.temp, key)
+					if(s.lastUpdated > timeLimit) then -- do not accept old sensor values
+						log("Setting sensor " .. s.name .. " temperature to " .. s.temp)
+						luup.variable_set(TEMP_SID, CURRENTTEMPERATURE, s.temp, key)
+					else
+						log("Sensor data to old for " .. s.name .. " with timestamp : " .. s.lastUpdated)
+						luup.set_failure(0, device)
+					end
 				end
 			end
 			if (s.humidity) then
 				local device, key = findChild(Telldus_device, s.id .. "_humidity")
 				if(device) then
-					log("Setting sensor " .. s.name .. " humidity to " .. s.temp)
-					luup.variable_set(HUM_SID, CURRENTLEVEL, s.humidity, key)
+					if(s.lastUpdated > timeLimit) then -- do not accept old sensor values
+						log("Setting sensor " .. s.name .. " humidity to " .. s.humidity)
+						luup.variable_set(HUM_SID, CURRENTLEVEL, s.humidity, key)
+					else
+						log("Sensor data to old for " .. s.name .. " with timestamp : " .. s.lastUpdated)
+						luup.set_failure(0, device)
+					end
 				end
 			end
 		end
@@ -183,18 +208,32 @@ function activityIn(from, to, id)
     local telldus_url= api_url .. "/device/history?id="..id.."&from=" .. from .."&to=" .. to
 	local response_body = request(telldus_url)
 	local history = JSON.decode(response_body[1])
-	return not (next(history.history) == nil)
+	if (history == nil) then
+		log("no history found for device")
+		return false -- maybe we should trigger the device
+	end
+	if(next(history.history) ~= nil) then
+		log("device has history")
+		return true
+	end
+	log("no history found for device")
+	return false;
 end
 
 function updateSecurityDevice(key, state, d)
+	log("Update security device " .. d.name)
 	local armed, tstamp = luup.variable_get(SECURITY_SID, ARMED, key)
 	if(armed == "1") then
+		log("Device armed...")
 		local armedTripped = luup.variable_get(SECURITY_SID, ARMEDTRIPPED, key)
 		if(armedTripped == "0") then
+			log("and not tripped....checking state")
 			if(activityIn(tstamp, os.time(), d.id)) then
 				luup.variable_set(SECURITY_SID, ARMEDTRIPPED, "1", key)
 				luup.variable_set(SECURITY_SID, TRIPPED, "1", key)
 			end
+		else
+			log("and allready tripped")
 		end
 	else
 		luup.variable_set(SECURITY_SID, TRIPPED, state, key)
@@ -234,45 +273,60 @@ end
 
 local function getDeviceInfo(id)
     local telldus_url= api_url .. "/device/info?id="..id.."&supportedMethods=951"
-	local response_body = request(telldus_url)
+	local response_body, status, success = request(telldus_url)
 	return JSON.decode(response_body[1])
 end
 
-
 function addAll(devices, sensors, lul_device)
 	child_devices = luup.chdev.start(lul_device);
+	local counter = 0
+	local added = 0
 	for k, d in pairs(devices.device) do
 		log("Device : " .. d.id .. " named " .. d.name .. " supporting methods : " .. tostring(d.methods))
 		local deviceinfo = getDeviceInfo(d.id)
-		log("Device model : " .. deviceinfo.model)
-		if(string.match(deviceinfo.model, "magnet")) then
-			log("Device " .. d.name .. " is a magnet")
-			luup.chdev.append(lul_device, child_devices, d.id, d.name, "", "D_DoorSensor1.xml", "", "", false)
-		elseif (string.match(deviceinfo.model, "pir")) then
-			log("Device " .. d.name .. " is a motion sensor")
-			luup.chdev.append(lul_device, child_devices, d.id, d.name, "", "D_MotionSensor1.xml", "", "", false)
-		else
-			log("Device " .. d.name .. " is dimmer or switch")
-			if(bit.band(d.methods, TELLSTICK_DIM) > 0) then
-				luup.chdev.append(lul_device, child_devices, d.id, d.name, "", "D_DimmableLight1.xml", "", "", false)
+		if(deviceinfo ~= nil) then
+			log("Device model : " .. deviceinfo.model)
+			if(string.match(deviceinfo.model, "magnet")) then
+				log("Device " .. d.name .. " is a magnet")
+				luup.chdev.append(lul_device, child_devices, d.id, d.name, "", "D_DoorSensor1.xml", "", "", false)
+				added = added + 1
+			elseif (string.match(deviceinfo.model, "pir")) then
+				log("Device " .. d.name .. " is a motion sensor")
+				luup.chdev.append(lul_device, child_devices, d.id, d.name, "", "D_MotionSensor1.xml", "", "", false)
+				added = added + 1
 			else
-				luup.chdev.append(lul_device, child_devices, d.id, d.name, "", "D_BinaryLight1.xml", "", "", false)
+				log("Device " .. d.name .. " is dimmer or switch")
+				if(bit.band(d.methods, TELLSTICK_DIM) > 0) then
+					luup.chdev.append(lul_device, child_devices, d.id, d.name, "", "D_DimmableLight1.xml", "", "", false)
+					added = added + 1
+				else
+					luup.chdev.append(lul_device, child_devices, d.id, d.name, "", "D_BinaryLight1.xml", "", "", false)
+					added = added + 1
+				end
 			end
+			counter = counter + 1
 		end
-
 	end
+	log("Found " .. counter .. " and added " .. added .. " devices.")
 
+	counter = 0
+	local tempSensorCount = 0
+	local humSensorsCount = 0
 	for k, s in pairs(sensors.sensor) do
 		if(s.name) then
 			log("Sensor : " .. s.id .. " named " .. s.name)
 			if (s.temp) then
 				luup.chdev.append(lul_device, child_devices, s.id .. "_temp", s.name .. " temperature", "", "D_TemperatureSensor1.xml", "", "", false)
+				tempSensorCount = tempSensorCount + 1
 			end
 			if (s.humidity) then
-				luup.chdev.append(lul_device, child_devices, s.id .. "_humidity", s.name .. " humidity", "", "D_HumiditySensor1.xml", "", false)
+				luup.chdev.append(lul_device, child_devices, s.id .. "_humidity", s.name .. " humidity", "", "D_HumiditySensor1.xml", "", "", false)
+				humSensorsCount = humSensorsCount + 1
 			end
 		end
+		counter = counter + 1
 	end
+	log("Found " .. counter .. " sensors. Added " .. tempSensorCount .. " temperature sensors. Added " .. humSensorsCount .. " humidity sensors.")
 	luup.chdev.sync(lul_device, child_devices)
 	updateSensors(sensors)
 	updateDevices(devices)
@@ -281,12 +335,15 @@ end
 function refresh()
 	updateSensors(getSensors())
 	updateDevices(getDevices())
+	local ta = os.date("*t")
+	local s = string.format("%d-%02d-%02d %02d:%02d:%02d", ta.year, ta.month, ta.day, ta.hour, ta.min, ta.sec)
+	luup.variable_set(TELLDUS_SID, LASTUPDATED, s, Telldus_device)
 end
 
 function refreshTrigger()
 	log("Telldus timer called...")
+	luup.call_delay("refreshTrigger", 120)
 	refresh()
-	luup.call_timer("refreshTrigger", 1, luup.variable_get(TELLDUS_SID, REFRESHINTERVAL, Telldus_device), "")
 	log("Telldus timer exit.")
 end
 
@@ -299,7 +356,7 @@ end
 
 function refreshSensorsAndDevices(lul_device)
 	task("Refreshing devices and sensors...", TASK_BUSY)
-	if(lastConnectionWasValid()) then
+	if(connectionIsValid()) then
 		local devices = getDevices()
 		local sensors = getSensors()
 		addAll(devices, sensors, lul_device);
@@ -347,13 +404,15 @@ function init()
 		luup.variable_set(TELLDUS_SID, TOKEN_SECRET, "", Telldus_device)
 	end
 
+
+
 end
 
 function lug_startup(lul_device)
 	log("Entering TelldusLive startup..")
 	Telldus_device = lul_device
 	init(lul_device)
-	luup.call_timer("refreshTrigger", 1, luup.variable_get(TELLDUS_SID, REFRESHINTERVAL, Telldus_device), "")
+	luup.call_delay("refreshTrigger", luup.variable_get(TELLDUS_SID, REFRESHINTERVAL, Telldus_device))
 	if(not areKeysValid()) then
 		task("You need to configure the Telldus keys", TASK_ERROR_PERM)
 		return false
