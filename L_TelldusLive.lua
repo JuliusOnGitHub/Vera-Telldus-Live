@@ -381,7 +381,7 @@ end
 
 function init()
 	if(luup.variable_get(TELLDUS_SID, REFRESHINTERVAL, Telldus_device) == nil) then
-		luup.variable_set(TELLDUS_SID, REFRESHINTERVAL, 30, Telldus_device)
+		luup.variable_set(TELLDUS_SID, REFRESHINTERVAL, 120, Telldus_device)
 	end
 
 	if(areKeysValid()) then
