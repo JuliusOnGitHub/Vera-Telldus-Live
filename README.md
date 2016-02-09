@@ -14,3 +14,5 @@ so I have only tested:
 * Proove door sensor
 * Some temp and humidiy sensors
 
+This is just a test implementation. This means that you run this at your own risk.
+
