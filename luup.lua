@@ -69,3 +69,10 @@ end
 function luup.call_timer()
     return true;
 end
+<<<<<<< HEAD
+=======
+
+function luup.call_delay()
+	return true
+end
+>>>>>>> origin/master
