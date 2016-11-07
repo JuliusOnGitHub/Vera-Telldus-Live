@@ -415,7 +415,6 @@ function lug_startup(lul_device)
 	luup.call_delay("refreshTrigger", luup.variable_get(TELLDUS_SID, REFRESHINTERVAL, Telldus_device))
 	if(not areKeysValid()) then
 		task("You need to configure the Telldus keys", TASK_ERROR_PERM)
-		return false
 	end
 	return true
 end
