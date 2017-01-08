@@ -1,5 +1,5 @@
-# VeraTelldusLive
-Control Telldus devices and get sensor values.
+# Vera Telldus Live Plugin
+Control Telldus (Tellstick, Tellstick duo etc) devices and get sensor values.It uses the Telldus Live Api to commmunicate with the telldus device.
 
 This is my first attempt at creating a Vera plugin. Hope it works for you.
 
@@ -12,7 +12,7 @@ so I have only tested:
 * Nexa switch and dimmer
 * Nexa pir
 * Proove door sensor
-* Some temp and humidiy sensors
+* Some temp and humidity sensors
 
 This is just a test implementation. This means that you run this at your own risk.
 
