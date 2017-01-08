@@ -17,5 +17,5 @@ so I have only tested:
 * Proove door sensor
 * Some temp and humidity sensors
 
-This is just a test implementation. This means that you run this at your own risk.
+You run this at your own risk, but I have not experienced any trouble at all. If anyone knows how to deploy this to the mios app store, please let me know, and I will be happy to help to deploy it there.
 
