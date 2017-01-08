@@ -1,5 +1,8 @@
 # Vera Telldus Live Plugin
-Control Telldus (Tellstick, Tellstick duo etc) devices and get sensor values.It uses the Telldus Live Api to commmunicate with the telldus device.
+Control Telldus (Tellstick, Tellstick duo etc) devices and get sensor values from your VeraEdge/VeraPlus/UI7. It uses the Telldus Live Api to commmunicate with the telldus device.
+
+<img src="http://getvera.com/wp-content/uploads/vera_logo_tm.png" height="100" />
+<img src="http://live.telldus.com/img/frameworklive/logoTelldusLive.svg" height="100" />
 
 This is my first attempt at creating a Vera plugin. Hope it works for you.
 
